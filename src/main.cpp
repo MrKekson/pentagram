@@ -33,10 +33,13 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+    leds[0] = CRGB::White;
+    FastLED.show();
+    delay(30);
 
-  copyToCRGB();
-  FastLED.setBrightness(g_brightness);
-  FastLED.show();  
+    leds[0] = CRGB::Black;
+    FastLED.show();
+    delay(30);
 }
 
 // #define WAVE_SIZE 3
