@@ -25,7 +25,7 @@ void copyToCRGB()
 
 void setup() {
   // put your setup code here, to run once:
-  FastLED.addLeds<NEOPIXEL, 13>(leds, NUM__LEDS);
+  FastLED.addLeds<NEOPIXEL, 27>(leds, NUM__LEDS);
 
   FastLED.setBrightness(g_brightness);
   FastLED.clear();
