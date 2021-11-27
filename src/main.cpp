@@ -25,7 +25,7 @@ void copyToCRGB()
 
 void setup() {
   // put your setup code here, to run once:
-  FastLED.addLeds<NEOPIXEL, 13>(leds, NUM__LEDS);
+  FastLED.addLeds<NEOPIXEL, 27>(leds, NUM__LEDS);
 
   FastLED.setBrightness(g_brightness);
   FastLED.clear();
@@ -33,10 +33,13 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+    leds[0] = CRGB::White;
+    FastLED.show();
+    delay(30);
 
-  copyToCRGB();
-  FastLED.setBrightness(g_brightness);
-  FastLED.show();  
+    leds[0] = CRGB::Black;
+    FastLED.show();
+    delay(30);
 }
 
 // #define WAVE_SIZE 3
