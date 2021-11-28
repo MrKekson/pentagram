@@ -1,46 +1,118 @@
 #include <Arduino.h>
+#include <FastLED.h>
 // #include <WiFi.h>
 // #include <WiFiClient.h>
 // #include <WiFiAP.h>
 
-#include <FastLED.h>
+#include "sign_pins.h"
+#include "data.h"
+#include "output.h"
 
-#define NUM__LEDS 150
-#define NUM__EX_LEDS 1
-#define NUM__COLORS 8
+#define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000 / x)
+//#define ARRAYLENGTH(x) (sizeof(x) / sizeof(x[0]))
 
-#define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000/x)
-#define ARRAYLENGTH(x) (sizeof(x)/sizeof(x[0]))
+// CHSV hsv_leds[NUM__LEDS];
+// CRGB leds[NUM__LEDS];
 
-CRGB leds[NUM__LEDS];
-int g_brightness = 159;
+EffectHandler eHandler;
 
-void copyToCRGB()
+extern int brightness;
+
+void setup()
 {
-    for(int i = 0; i < NUM__LEDS; i++)
-    {
-        leds[i] = CRGB(200,200,200); // CRGB(hsv_leds[i + WAVE_SIZE]);
-    }
+  //eHandler = new EffectHandler();
+  eHandler.Start();
 }
 
-void setup() {
-  // put your setup code here, to run once:
-  FastLED.addLeds<NEOPIXEL, 27>(leds, NUM__LEDS);
-
-  FastLED.setBrightness(g_brightness);
-  FastLED.clear();
+void loop()
+{
+  EVERY_N_MILLISECONDS(10)
+  {
+    eHandler.Render();
+  }
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-    leds[0] = CRGB::White;
-    FastLED.show();
-    delay(30);
+// void set(CRGB c)
+// {
+//   for (int i = 0; i < NUM__LEDS; ++i)
+//   {
+//     leds[i] = c;
+//   }
+// }
 
-    leds[0] = CRGB::Black;
-    FastLED.show();
-    delay(30);
-}
+// void copyToCRGB()
+// {
+//   for (int i = 0; i < NUM_LEDS; i++)
+//   {
+//     CHSV color(171, 255, 255);
+//     auto v = CHSV(32,32,42);
+//     CRGB c2 = CRGB(CHSV(32, 32, 128));
+//     leds[i].setHSV(color.h, color.s, color.v); //CRGB(64, 64, 64);  //CRGB(*hsv_leds[i]);
+//   }
+// }
+
+// void reset(CRGB color)
+// {
+//   fill_solid(leds, NUM__LEDS, color);
+// }
+
+// void setup()
+// {
+//   //Serial.begin(9600);
+//   // put your setup code here, to run once:
+//   FastLED.addLeds<NEOPIXEL, 27>(leds, NUM__LEDS);
+
+//   FastLED.setBrightness(brightness);
+//   FastLED.clear();
+
+//   fill_solid(leds, NUM__LEDS, CRGB::DeepSkyBlue);
+//   //reset(CRGB(64, 64, 64));
+//   //copyToCRGB();
+// }
+
+// #define SEGMENT_SIZE 1
+
+// int maxNumberOfLoops = NUM__LEDS;
+// int loopCounter = 0;
+
+// void waveEffect()
+// {
+//   // EVERY_N_MILLISECONDS(200)
+//   {
+//     CRGB c = CRGB(32, 32, 128);
+//     leds[loopCounter] = c;
+//     leds[loopCounter + SEGMENT_SIZE] = c;
+//     leds[loopCounter + SEGMENT_SIZE * 2] = c;
+//     leds[loopCounter + SEGMENT_SIZE * 3] = c;
+
+//     if (loopCounter == maxNumberOfLoops - 1)
+//     {
+//       loopCounter = 0;
+//       reset(CRGB(0, 0, 0));
+//       return;
+//     }
+//     //Serial.println("L: loopCounter");
+//     ++loopCounter;
+//   }
+// }
+
+// void loop()
+// {
+//   put your main code here, to run repeatedly:
+
+//   waveEffect();
+//   EVERY_N_MILLISECONDS(300)
+//   {
+//     for (int i = 0; i < NUM__LEDS; i++)
+//     {
+//       leds[i] = CRGB::Red;
+//     }
+//   }
+//   FastLED.setBrightness(brightness);
+//   FastLED.show();
+//   Render();
+//   delay(200);
+// }
 
 // #define WAVE_SIZE 3
 
@@ -206,7 +278,6 @@ void loop() {
 // bool pulseInProgress = false;
 
 // int sinValue = 0;
-
 
 // void dimTo(int value) {
 //     for(int i = 0; i < NUM__LEDS; ++i)
