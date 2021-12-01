@@ -130,13 +130,13 @@ public:
         delay(100);
 
         this->AddEffect(new Effect(CHSV(160, 150, 128), 64));
-        //this->AddEffect(new Wobble(CRGB::AliceBlue, 2));
-        //
-
-        this->AddEffect(new DeepLightEffect(CHSV(160, 255, 192), 256));
-        this->AddEffect(new LightSection(70, 10, .5, false, CHSV(70, 192, 192), 80));
-        this->AddEffect(new LightSection(282, 45, 3.14, true, CHSV(180, 255, 198), 130));
-        this->AddEffect(new LightSection(40, 15, 1, false, CHSV(140, 200, 180), 160));
+        // //this->AddEffect(new Wobble(CRGB::AliceBlue, 2));
+        // //
+        this->AddEffect(new SymbolSimpleFade(CHSV(270, 192, 192), 194, 17, 10000, 200));
+        // this->AddEffect(new DeepLightEffect(CHSV(160, 255, 192), 256));
+        this->AddEffect(new LightSection(70, 10, .5, false, CHSV(70, 192, 192), 190));
+        // this->AddEffect(new LightSection(282, 45, 3.14, true, CHSV(180, 255, 198), 130));
+        // this->AddEffect(new LightSection(40, 15, 1, false, CHSV(140, 200, 180), 160));
 
         _last_time = millis();
     }

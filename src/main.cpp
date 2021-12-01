@@ -6,7 +6,8 @@
 
 #include "sign_pins.h"
 #include "data.h"
-#include "output.h"
+#include "effect_handler.h"
+#include "animation_handler.h"
 
 #define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000 / x)
 //#define ARRAYLENGTH(x) (sizeof(x) / sizeof(x[0]))
@@ -15,6 +16,7 @@
 // CRGB leds[NUM__LEDS];
 
 EffectHandler eHandler;
+AnimationHandler aHandler;
 
 extern int brightness;
 
@@ -22,6 +24,7 @@ void setup()
 {
   //eHandler = new EffectHandler();
   eHandler.Start();
+  aHandler.Startup();
 }
 
 void loop()

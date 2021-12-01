@@ -1,7 +1,7 @@
 #pragma once
 #include <FastLED.h>
 
-#include "output.h"
+#include "debug.h"
 
 #define NUM_DEG 360
 
@@ -25,7 +25,43 @@ class Effect
 {
 protected:
     CHSV _c;
-    int _last_time;
+    unsigned long _start_time;
+    unsigned long _last_time; //last run time to calculate effect amount
+
+    void ResetData()
+    {
+        for (size_t i = 0; i < NUM_DEG; i++)
+        {
+            _data[i].rWeight = 0;
+            _data[i].c = _c;
+        }
+    }
+
+    void UpdatePart(CHSV c, double deg, double width, double ww = 0)
+    {
+        if (ww == 0)
+        {
+            ww = _rWeight;
+        }; //0 nem lesz jó
+
+        for (int i = deg - width / 2; i < deg + width / 2; i++)
+        {
+            if (i < 0)
+            {
+                _data[360 + i] = CData(ww, c);
+            }
+
+            if (i >= 0 && i < 360)
+            {
+                _data[i] = CData(ww, c);
+            }
+
+            if (i >= 360)
+            {
+                _data[i - 360] = CData(ww, c);
+            }
+        }
+    }
 
 public:
     CData _data[NUM_DEG];
@@ -43,6 +79,7 @@ public:
 
     explicit Effect(CHSV c, int rw = 0)
     {
+        _start_time = millis();
         _c = c;
         _rWeight = rw;
         _last_time = millis();
@@ -51,6 +88,43 @@ public:
         {
             _data[i] = CData(_rWeight, _c);
         }
+    }
+};
+
+class SymbolSimpleFade : public Effect
+{
+protected:
+    double _deg;
+    double _width;
+    long _duration;
+
+public:
+    void DoStuff() override
+    {
+        if (millis() < _duration + _start_time)
+        {
+            //DLED::Blink(3, 10);
+            long deltaW = (_rWeight / _duration) * (millis() - _start_time);
+
+            //auto c = CHSV(_c.h + deltaC, _c.s + deltaC, _c.v + deltaC);
+
+            ResetData();
+
+            UpdatePart(_c, _deg, _width, deltaW);
+            _last_time = millis();
+        }
+    }
+
+    ///should be symbol numba
+    SymbolSimpleFade(CHSV c, double deg, double width, long dur, int rw = 128) : Effect(c, 0)
+    {
+        _c = c;
+        _deg = deg;
+        _width = width;
+        _duration = dur;
+        _rWeight = rw;
+        _last_time = millis();
+        _start_time = millis();
     }
 };
 
@@ -67,9 +141,9 @@ public:
         _rWeight = rw;
         _last_time = millis();
 
-        for (size_t i = 7; i <= NUM_DEG - 8; i += 5)
+        for (size_t i = 0; i <= NUM_DEG; i += 5)
         {
-            //_data[i] = CData(_rWeight, c);
+            _data[i] = CData(_rWeight, c);
         }
     }
 };
@@ -105,28 +179,9 @@ public:
             _deg = 360;
         }
 
-        for (size_t i = 0; i < NUM_DEG; i++)
-        {
-            _data[i].rWeight = 0;
-        }
+        ResetData();
 
-        for (int i = _deg - _width / 2; i < _deg + _width / 2; i++)
-        {
-            if (i < 0)
-            {
-                _data[360 + i] = CData(_rWeight, _c);
-            }
-
-            if (i >= 0 && i < 360)
-            {
-                _data[i] = CData(_rWeight, _c);
-            }
-
-            if (i >= 360)
-            {
-                _data[i - 360] = CData(_rWeight, _c);
-            }
-        }
+        UpdatePart(_c, _deg, _width);
     }
 
     LightSection(double deg, double w, double s, bool forward, CHSV c, int rw = 128) : Effect(c, 0)
@@ -137,24 +192,6 @@ public:
         _speed = s;
         _dir = forward;
         _rWeight = rw;
-
-        for (size_t i = deg - w / 2; i < deg + w / 2; i++)
-        {
-            if (i < 0)
-            {
-                _data[360 + i] = CData(_rWeight, _c);
-            }
-
-            if (i >= 0 && i < 360)
-            {
-                _data[i] = CData(_rWeight, _c);
-            }
-
-            if (i >= 360)
-            {
-                _data[i - 360] = CData(_rWeight, _c);
-            }
-        }
     }
 };
 
