@@ -1,9 +1,8 @@
 #pragma once
 #include <FastLED.h>
 
+#include "base.h"
 #include "debug.h"
-
-#define NUM_DEG 360
 
 struct CData
 {
@@ -26,7 +25,7 @@ class Effect
 protected:
     CHSV _c;
     unsigned long _start_time;
-    unsigned long _last_time; //last run time to calculate effect amount
+    unsigned long _last_time; // last run time to calculate effect amount
 
     void ResetData()
     {
@@ -42,7 +41,7 @@ protected:
         if (ww == 0)
         {
             ww = _rWeight;
-        }; //0 nem lesz jó
+        }; // 0 nem lesz jó
 
         for (int i = deg - width / 2; i < deg + width / 2; i++)
         {
@@ -103,10 +102,10 @@ public:
     {
         if (millis() < _duration + _start_time)
         {
-            //DLED::Blink(3, 10);
+            // DLED::Blink(3, 10);
             long deltaW = (_rWeight / _duration) * (millis() - _start_time);
 
-            //auto c = CHSV(_c.h + deltaC, _c.s + deltaC, _c.v + deltaC);
+            // auto c = CHSV(_c.h + deltaC, _c.s + deltaC, _c.v + deltaC);
 
             ResetData();
 
@@ -115,7 +114,7 @@ public:
         }
     }
 
-    ///should be symbol numba
+    /// should be symbol numba
     SymbolSimpleFade(CHSV c, double deg, double width, long dur, int rw = 128) : Effect(c, 0)
     {
         _c = c;
@@ -136,12 +135,14 @@ public:
         _last_time = millis();
     }
 
-    DeepLightEffect(CHSV c, int rw = 128) : Effect(c, 0)
+    DeepLightEffect(CHSV c, int deg = 30, int rw = 128) : Effect(c, 0)
     {
         _rWeight = rw;
         _last_time = millis();
 
-        for (size_t i = 0; i <= NUM_DEG; i += 5)
+        ResetData();
+
+        for (int i = 0; i < NUM_DEG; i += 30)
         {
             _data[i] = CData(_rWeight, c);
         }

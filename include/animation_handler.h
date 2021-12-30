@@ -3,6 +3,7 @@
 #include "effect.h"
 #include "effect_handler.h"
 #include "debug.h"
+#include "base.h"
 
 class AnimationHandler
 {
