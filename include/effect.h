@@ -3,6 +3,7 @@
 
 #include "base.h"
 #include "debug.h"
+#include "clampy.h"
 
 struct CData
 {
@@ -20,7 +21,7 @@ struct CData
     CHSV c;          /* _data */
 };
 
-class Effect
+class Effect : public Clampy
 {
 protected:
     CHSV _c;
@@ -36,30 +37,23 @@ protected:
         }
     }
 
-    void UpdatePart(CHSV c, double deg, double width, double ww = 0)
+    void UpdatePart(CHSV c, double posDeg, double width, double str = 0)
     {
-        if (ww == 0)
+        if (str == 0)
         {
-            ww = _rWeight;
+            str = _rWeight;
         }; // 0 nem lesz jó
 
-        for (int i = deg - width / 2; i < deg + width / 2; i++)
+        for (int i = posDeg - width / 2; i < posDeg + width / 2; i++)
         {
-            if (i < 0)
-            {
-                _data[360 + i] = CData(ww, c);
-            }
-
-            if (i >= 0 && i < 360)
-            {
-                _data[i] = CData(ww, c);
-            }
-
-            if (i >= 360)
-            {
-                _data[i - 360] = CData(ww, c);
-            }
+            _data[Clamp(i)] = CData(str, c);
         }
+    }
+
+    void SetSymbol(CHSV c, int sNum, int str)
+    {
+        int pos = (sNum * SYMBOL_WIDTH) + SYMBOL_OFFSET;
+        UpdatePart(c, pos, SYMBOL_LED_WIDTH, str);
     }
 
 public:
@@ -93,33 +87,33 @@ public:
 class SymbolSimpleFade : public Effect
 {
 protected:
-    double _deg;
-    double _width;
+    int _sNum;
     long _duration;
 
 public:
     void DoStuff() override
     {
-        if (millis() < _duration + _start_time)
-        {
-            // DLED::Blink(3, 10);
-            long deltaW = (_rWeight / _duration) * (millis() - _start_time);
+        ResetData();
+        SetSymbol(_c, _sNum, _rWeight);
+        // if (millis() < _duration + _start_time)
+        // {
+        //     // DLED::Blink(3, 10);
+        //     long deltaW = (_rWeight / _duration) * (millis() - _start_time);
 
-            // auto c = CHSV(_c.h + deltaC, _c.s + deltaC, _c.v + deltaC);
+        //     // auto c = CHSV(_c.h + deltaC, _c.s + deltaC, _c.v + deltaC);
 
-            ResetData();
+        //     ResetData();
 
-            UpdatePart(_c, _deg, _width, deltaW);
-            _last_time = millis();
-        }
+        //     UpdatePart(_c, _deg, _width, deltaW);
+        //     _last_time = millis();
+        // }
     }
 
     /// should be symbol numba
-    SymbolSimpleFade(CHSV c, double deg, double width, long dur, int rw = 128) : Effect(c, 0)
+    SymbolSimpleFade(CHSV c, int sNum, long dur, int rw = 128) : Effect(c, 0)
     {
         _c = c;
-        _deg = deg;
-        _width = width;
+        _sNum = sNum;
         _duration = dur;
         _rWeight = rw;
         _last_time = millis();
@@ -127,7 +121,7 @@ public:
     }
 };
 
-class DeepLightEffect : public Effect
+class DeepLightEffect : public Effect, public Clampy
 {
 public:
     void DoStuff() override
@@ -135,7 +129,7 @@ public:
         _last_time = millis();
     }
 
-    DeepLightEffect(CHSV c, int deg = 30, int rw = 128) : Effect(c, 0)
+    DeepLightEffect(CHSV c, int deg = 30, int width = LED_RATIO, int degShift = 0, int rw = 128) : Effect(c, 0)
     {
         _rWeight = rw;
         _last_time = millis();
@@ -144,7 +138,11 @@ public:
 
         for (int i = 0; i < NUM_DEG; i += 30)
         {
-            _data[i] = CData(_rWeight, c);
+            for (int j = i - width / 2; j < i + width / 2; j++)
+            {
+                int curr = Clamp(j + degShift);
+                _data[curr] = CData(_rWeight, c);
+            }
         }
     }
 };
@@ -174,7 +172,6 @@ public:
         {
             _deg = 0;
         }
-
         if (_deg < 0)
         {
             _deg = 360;

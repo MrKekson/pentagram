@@ -3,3 +3,11 @@
 #define NUM_DEG 360
 #define NUM_LEDS 96
 #define LED_RATIO NUM_DEG / NUM_LEDS
+
+#define OUTPUT_PIN 13
+
+#define DEFAULT_BRIGHTNESS 64
+
+#define SYMBOL_LED_WIDTH 26
+#define SYMBOL_WIDTH 30
+#define SYMBOL_OFFSET 11
