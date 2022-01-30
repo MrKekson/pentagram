@@ -4,7 +4,7 @@
 #define NUM_LEDS 96
 #define LED_RATIO NUM_DEG / NUM_LEDS
 
-#define OUTPUT_PIN 13
+#define OUTPUT_PIN 27
 
 #define DEFAULT_BRIGHTNESS 64
 

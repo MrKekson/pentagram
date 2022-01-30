@@ -20,21 +20,6 @@ private:
     int _last_time;
     double r_weight = 1;
 
-    int Clamp(int degNum, int clamp = 360)
-    {
-        int current = degNum;
-        if (degNum < 0)
-        {
-            current = clamp + degNum; // = CData(ww, c);
-        }
-
-        if (degNum >= 360)
-        {
-            current = degNum - clamp; // = CData(ww, c);
-        }
-        return current;
-    }
-
     /*CHSV Valami(int degNum, double width = 5, int clamp = 360)
     {
         int h = 0, s = 0, v = 0, count = 0;
@@ -151,7 +136,6 @@ public:
                 int h = 0, s = 0, v = 0, count = 0;
                 int lnum = 0;
 
-                // leds[i] = _data[di]; //<- ez tré, csúszó átlag?
                 for (int dnum = di - led_width; dnum < di + led_width; dnum++)
                 {
                     count++;
@@ -193,14 +177,14 @@ public:
         FastLED.show();
         delay(200);
 
-        this->AddEffect(new Effect(CHSV(160, 150, 128), 1));
+        this->AddEffect(new Effect(CHSV(160, 128, 128), 1));
         //  //this->AddEffect(new Wobble(CRGB::AliceBlue, 2));
         //  //
-        this->AddEffect(new SymbolSimpleFade(CHSV(0, 192, 192), 6, 10000, 200));
-        // this->AddEffect(new DeepLightEffect(CHSV(180, 200, 192), 8, 8, -4, 256));
+        this->AddEffect(new SymbolSimpleFade(CHSV(0, 192, 192), 9, 10000, 200));
+        //this->AddEffect(new DeepLightEffect(CHSV(180, 200, 192), 8, 8, -4, 256));
         this->AddEffect(new LightSection(70, 10, .5, false, CHSV(70, 192, 192), 130));
-        // this->AddEffect(new LightSection(282, 45, 3.14, true, CHSV(180, 255, 198), 130));
-        this->AddEffect(new LightSection(40, 15, 1, false, CHSV(140, 200, 180), 130));
+        // // this->AddEffect(new LightSection(282, 45, 3.14, true, CHSV(180, 255, 198), 130));
+        // this->AddEffect(new LightSection(40, 15, 1, false, CHSV(140, 200, 180), 130));
 
         _last_time = millis();
     }

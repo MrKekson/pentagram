@@ -1,13 +1,15 @@
 #include <Arduino.h>
 #include <FastLED.h>
+#include <ArduinoJson.h>
 // #include <WiFi.h>
 // #include <WiFiClient.h>
 // #include <WiFiAP.h>
 
-#include "sign_pins.h"
 #include "data.h"
 #include "effect_handler.h"
 #include "animation_handler.h"
+#include "SPIFFS.h"
+
 
 #define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000 / x)
 //#define ARRAYLENGTH(x) (sizeof(x) / sizeof(x[0]))
@@ -22,7 +24,52 @@ extern int brightness;
 
 void setup()
 {
-  //eHandler = new EffectHandler();
+  Serial.begin(9600);
+  //eHandler = new EffectHandler(); Serial.begin(9600);
+  auto t = esp_timer_get_time;
+
+  if(!SPIFFS.begin(true)){
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
+  }
+  
+  File file = SPIFFS.open("/test.json");
+  if(!file){
+    Serial.println("Failed to open file for reading");
+    return;
+  }
+  
+  Serial.println("File Content:");
+  auto fSize = file.size();
+
+  char jsonFileData[fSize]  = {'\0'};
+
+  u_int i = 0;
+
+  while(file.available()){
+    jsonFileData[i] = file.read();
+    Serial.write(jsonFileData[i]);
+    i++;
+  }
+  jsonFileData[i] ='\0';
+
+  file.close();
+  
+  u_int jsonSize = fSize * 1.04;  //ke?
+  DynamicJsonDocument doc(jsonSize);
+
+  DeserializationError error = deserializeJson(doc, jsonFileData);
+
+  if (error) {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    return;
+  }
+
+  const char* name = doc["name"];
+  Serial.println("name:");
+  Serial.println(name);
+
   eHandler.Start();
   aHandler.Startup();
 }

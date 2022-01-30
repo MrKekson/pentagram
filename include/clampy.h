@@ -1,12 +1,6 @@
-class Clampy
-{
-private:
-    /* data */
-public:
-    static int Clamp(int degNum, int clamp = 360);
-};
+#pragma once
 
-int Clampy::Clamp(int degNum, int clamp)
+int Clamp(int degNum, int clamp = 360)
 {
     int current = degNum;
     if (degNum < 0)

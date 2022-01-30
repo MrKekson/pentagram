@@ -1,4 +1,5 @@
 #pragma once
+
 #include <FastLED.h>
 
 #include "base.h"
@@ -21,7 +22,7 @@ struct CData
     CHSV c;          /* _data */
 };
 
-class Effect : public Clampy
+class Effect
 {
 protected:
     CHSV _c;
@@ -30,10 +31,13 @@ protected:
 
     void ResetData()
     {
+        CData oneData = CData(0, _c);
+
         for (size_t i = 0; i < NUM_DEG; i++)
         {
-            _data[i].rWeight = 0;
-            _data[i].c = _c;
+            
+            _data[i] = oneData;
+            //_data[i].c = _c;
         }
     }
 
@@ -121,7 +125,7 @@ public:
     }
 };
 
-class DeepLightEffect : public Effect, public Clampy
+class DeepLightEffect : public Effect
 {
 public:
     void DoStuff() override
@@ -136,7 +140,7 @@ public:
 
         ResetData();
 
-        for (int i = 0; i < NUM_DEG; i += 30)
+        for (int i = 0; i < NUM_DEG; i += deg)
         {
             for (int j = i - width / 2; j < i + width / 2; j++)
             {
