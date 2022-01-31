@@ -1,5 +1,7 @@
 #pragma once
 
+#define POS_CORRECTION -9
+
 #define NUM_DEG 360
 #define NUM_LEDS 96
 #define LED_RATIO NUM_DEG / NUM_LEDS
@@ -10,4 +12,8 @@
 
 #define SYMBOL_LED_WIDTH 26
 #define SYMBOL_WIDTH 30
-#define SYMBOL_OFFSET 11
+#define SYMBOL_OFFSET 23
+
+#define MILLIS_IN_MINUTE (60 * 1000)
+#define MICROS_IN_MINUTE (MILLIS_IN_MINUTE * 1000)
+

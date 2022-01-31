@@ -6,6 +6,7 @@
 // #include <WiFiAP.h>
 
 #include "data.h"
+#include "renderer.h"
 #include "effect_handler.h"
 #include "animation_handler.h"
 #include "SPIFFS.h"
@@ -16,22 +17,38 @@
 
 // CHSV hsv_leds[NUM__LEDS];
 // CRGB leds[NUM__LEDS];
+void AdditionalCode();
 
-EffectHandler eHandler;
-AnimationHandler aHandler;
+Renderer renderer;
+EffectHandler eHandler = EffectHandler(renderer);
 
 extern int brightness;
 
 void setup()
 {
-  Serial.begin(9600);
-  //eHandler = new EffectHandler(); Serial.begin(9600);
+  Serial.begin(115200);
+
+  AdditionalCode();
+
+  renderer.Setup();
+  eHandler.Start();
+}
+
+void loop()
+{
+  EVERY_N_MILLISECONDS(5)
+  {
+    eHandler.DoStuff();
+  }
+}
+
+void AdditionalCode() {
   auto t = esp_timer_get_time;
 
   if(!SPIFFS.begin(true)){
-    Serial.println("An Error has occurred while mounting SPIFFS");
-    return;
-  }
+      Serial.println("An Error has occurred while mounting SPIFFS");
+      return;
+    }
   
   File file = SPIFFS.open("/test.json");
   if(!file){
@@ -66,20 +83,9 @@ void setup()
     return;
   }
 
-  const char* name = doc["name"];
-  Serial.println("name:");
-  Serial.println(name);
-
-  eHandler.Start();
-  aHandler.Startup();
-}
-
-void loop()
-{
-  EVERY_N_MILLISECONDS(10)
-  {
-    eHandler.Render();
-  }
+  // const char* name = doc["name"];
+  // Serial.println("name:");
+  // Serial.println(name);
 }
 
 // void set(CRGB c)

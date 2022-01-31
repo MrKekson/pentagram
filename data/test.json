@@ -1,10 +1,45 @@
-[
-    {   
-        "name" : "test1",
-        "anim" : "a1" 
-    },
-    {   
-        "name" : "test2",
-        "anim" : "a2" 
-    }
-]
+{
+    "anim1": [
+        {
+            "line1": [
+            {
+                "type": "UpdateSector",
+                "input1": 15,
+                "startTime": 0,
+                "endTime": 150,
+                "funtionParam": {
+                    "name" : "decto", 
+                    "val1" : 1
+                }
+            },
+            {
+                "type": "UpdateSector",
+                "input1": 15,
+                "funtionParam": {
+                    "name" : "decto", 
+                    "val1" : 1
+                }
+            }
+        ]},
+        {
+            "line2": 
+            [
+                {
+                    "type": "UpdateSector",
+                    "input1": 15,
+                    "funtionParam": {
+                        "name" : "decto", 
+                        "val1" : 1
+                    }
+                },
+                {
+                    "type": "UpdateSector",
+                    "input1": 15,
+                    "funtionParam": {
+                        "name" : "decto", 
+                        "val1" : 1
+                    }
+                }
+            ]}
+    ]
+}

@@ -3,14 +3,15 @@ class Animation
 private:
     long _runTime = 0;
 
+
 public:
-    explicit Animation(/* args */);
+    explicit Animation();
     ~Animation();
 
     virtual int Start();
 };
 
-Animation::Animation(/* args */)
+Animation::Animation()
 {
 }
 

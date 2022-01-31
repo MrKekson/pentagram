@@ -9,12 +9,12 @@ class AnimationHandler
 {
 private:
 public:
-    AnimationHandler(/* args */);
+    AnimationHandler();
     ~AnimationHandler();
     void Startup();
 };
 
-AnimationHandler::AnimationHandler(/* args */)
+AnimationHandler::AnimationHandler()
 {
 }
 
