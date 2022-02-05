@@ -1,20 +1,24 @@
+#pragma once
 #include <vector.h>
 
-#include "effect.h"
+#include "effects.h"
 #include "effect_handler.h"
 #include "debug.h"
 #include "base.h"
+#include "animation.h"
 
 class AnimationHandler
 {
 private:
+    Renderer &_renderer;
+
 public:
-    AnimationHandler();
+    AnimationHandler(Renderer &renderer);
     ~AnimationHandler();
     void Startup();
 };
 
-AnimationHandler::AnimationHandler()
+AnimationHandler::AnimationHandler(Renderer &renderer) : _renderer(renderer)
 {
 }
 
@@ -24,4 +28,7 @@ AnimationHandler::~AnimationHandler()
 
 void AnimationHandler::Startup()
 {
+    auto newAnimation = new Animation();
+    newAnimation->Setup();
+    newAnimation->Start();
 }

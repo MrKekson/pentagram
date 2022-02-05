@@ -5,6 +5,221 @@
 #include "base.h"
 #include "debug.h"
 
+struct CData
+{
+    CData()
+    {
+        rWeight = 0;
+        c = CHSV(0, 0, 0);
+    }
+    CData(int rw, CHSV col)
+    {
+        rWeight = rw;
+        c = CHSV(col);
+    }
+    int rWeight = 0; /*render weight*/
+    CHSV c;          /* _data */
+};
+
+int Clamp(int degNum, int clamp = NUM_DEG) // cyrcle clamp
+{
+    int current = degNum;
+    if (degNum < 0)
+    {
+        current = clamp + degNum;
+    }
+
+    if (degNum >= NUM_DEG)
+    {
+        current = degNum - clamp;
+    }
+    return current;
+}
+
+double Clamp(double degNum, double clamp = NUM_DEG) // cyrcle clamp
+{
+    double current = degNum;
+
+    if (degNum < 0)
+    {
+        current = clamp + degNum;
+    }
+
+    if (degNum >= NUM_DEG)
+    {
+        current = degNum - clamp;
+    }
+    return current;
+}
+
+class BaseEffect
+{
+protected:
+    void ResetData()
+    {
+        CData oneData = CData(0, _c);
+
+        for (size_t i = 0; i < NUM_DEG; i++)
+        {
+            _data[i] = oneData;
+        }
+    }
+
+public:
+    CHSV _c;
+    CData _data[NUM_DEG];
+    int _rWeight;
+    double _deg;
+    double _width;
+
+    int64_t runTime = 0;
+    int64_t startTime = -1;
+    int64_t endTime = -1;
+    int64_t LastRunTime = 0;
+
+    bool isStarted()
+    {
+        if (startTime < 0)
+        {
+            return true;
+        }
+
+        return startTime < esp_timer_get_time();
+    }
+
+    bool isEnded()
+    {
+        if (endTime < 0)
+        {
+            return false;
+        }
+        return endTime < esp_timer_get_time();
+    }
+
+    void Render()
+    {
+        ResetData();
+
+        // for (int i = ((NUM_DEG - 1) - _deg) - _width / 2.0; i < (NUM_DEG - _deg) + _width / 2.0; i++)
+        // do we ned reset here, we can set
+        if (isEnded() || !isStarted())
+        {
+            return;
+        }
+        for (int i = (_deg)-_width / 2.0; i < _deg + _width / 2.0; i++)
+        {
+            _data[Clamp(i)] = CData(_rWeight, _c);
+        }
+    }
+
+    virtual void CalcStep(int64_t time)
+    {
+        // ResetData();
+    }
+
+    explicit BaseEffect(CHSV c, double deg, double w, int rw = 0)
+    {
+        _c = c;
+        _deg = deg;
+        _width = w;
+        _rWeight = rw;
+
+        // _start_time = esp_timer_get_time();
+        // _last_time = esp_timer_get_time();
+
+        for (size_t i = 0; i < NUM_DEG; i++)
+        {
+            _data[i] = CData(_rWeight, _c);
+        }
+    }
+};
+
+// typedef double (*OneValueChanger)(double, int64_t);
+
+using OneValueChanger = std::function<double(double, int64_t)>;
+// typedef double (*TwoValueChanger)(double, int64_t);
+
+class SetAngleEffect : public BaseEffect
+{
+protected:
+public:
+    OneValueChanger changerStuff;
+    // TwoValueChanger changerStuff2;
+
+    void CalcStep(int64_t time) override
+    {
+        if (changerStuff != nullptr)
+        {
+            _deg = changerStuff(_deg, time);
+        }
+        // if(changerStuff2 != nullptr)
+        // {
+        //     _deg = changerStuff2();
+        // }
+    }
+
+    SetAngleEffect(CHSV c, double deg, OneValueChanger degChanger, double w, int rw = 128) : BaseEffect(c, deg, w, rw), changerStuff(degChanger)
+    {
+    }
+    // SetAngleEffect(CHSV c, double deg, TwoValueChanger stuffChange2, double w, int rw = 128) : BaseEffect(c, deg, w, rw), changerStuff(stuffChanger2)
+    // {
+    // }
+
+    double DurationRatio()
+    {
+        return (double)(esp_timer_get_time() - startTime) / (double)(endTime - startTime);
+    }
+};
+
+// class RotateSector : public SetAngleEffect
+// {
+// protected:
+//     bool _dir;
+//     double _rpm;
+
+// public:
+//     void CalcStep() override
+//     {
+//         _deg = RotateDeg(_deg, _rpm, _dir, _last_time);
+
+//         _last_time = esp_timer_get_time();
+
+//         SetAngleEffect::CalcStep();
+//     }
+
+//     RotateSector(CHSV c, double deg, double w, double rpm, int dir, int rw = 128) : SetAngleEffect(c, deg, w, rw)
+//     {
+//         _c = c;
+//         _width = w;
+//         _deg = deg;
+//         _rpm = rpm;
+//         _dir = dir;
+//         _rWeight = rw;
+//     }
+// };
+
+class SetSymbolEffect : public SetAngleEffect
+{
+protected:
+public:
+    int _symNum;
+    void CalcStep(int64_t time) override
+    {
+        SetAngleEffect::CalcStep(time);
+    }
+
+    SetSymbolEffect(CHSV c, int symbolNumba, int rw = 128) : SetAngleEffect(c, 0, 0, rw)
+    {
+        _c = c;
+        _symNum = symbolNumba;
+        _rWeight = rw;
+
+        int newDeg = (_symNum * SYMBOL_WIDTH) + SYMBOL_OFFSET;
+        _width = SYMBOL_LED_WIDTH;
+        _deg = newDeg;
+    }
+};
+
 // class Effect
 // {
 // protected:
@@ -17,7 +232,7 @@
 //         CData oneData = CData(0, _c);
 
 //         for (size_t i = 0; i < NUM_DEG; i++)
-//         {            
+//         {
 //             _data[i] = oneData;
 //         }
 //     }
@@ -35,7 +250,7 @@
 //     //     }
 //     // }
 
-//     // void SetSymbol(CHSV c, int sNum, int str)
+//     // void SetSymbolEffect(CHSV c, int sNum, int str)
 //     // {
 //     //     int pos = (sNum * SYMBOL_WIDTH) + SYMBOL_OFFSET;
 //     //     UpdatePart(c, pos, SYMBOL_LED_WIDTH, str);
@@ -45,7 +260,7 @@
 //     CData _data[NUM_DEG];
 //     int _rWeight;
 
-//     virtual void DoStuff()
+//     virtual void CalcStep()
 //     {
 //         _last_time = millis();
 //     }
@@ -76,10 +291,10 @@
 //     long _duration;
 
 // public:
-//     void DoStuff() override
+//     void CalcStep() override
 //     {
 //         ResetData();
-//         SetSymbol(_c, _sNum, _rWeight);
+//         SetSymbolEffect(_c, _sNum, _rWeight);
 //         // if (millis() < _duration + _start_time)
 //         // {
 //         //     // DLED::Blink(3, 10);
@@ -109,7 +324,7 @@
 // class DeepLightEffect : public Effect
 // {
 // public:
-//     void DoStuff() override
+//     void CalcStep() override
 //     {
 //         _last_time = millis();
 //     }
@@ -141,7 +356,7 @@
 //     double _speed;
 
 // public:
-//     void DoStuff() override
+//     void CalcStep() override
 //     {
 //         _last_time = millis();
 //         if (_dir)
@@ -205,7 +420,7 @@
 //     }
 
 // public:
-//     void DoStuff(int time)
+//     void CalcStep(int time)
 //     {
 
 //         // if (millis() - _last_time > (1000 / _w_freq))
