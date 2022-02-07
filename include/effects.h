@@ -1,9 +1,12 @@
 #pragma once
 
 #include <FastLED.h>
-
+#include <limits.h>
 #include "base.h"
 #include "debug.h"
+
+template <class T>
+using ValueChanger = std::function<T(T, int64_t)>;
 
 struct CData
 {
@@ -23,33 +26,28 @@ struct CData
 
 int Clamp(int degNum, int clamp = NUM_DEG) // cyrcle clamp
 {
-    int current = degNum;
-    if (degNum < 0)
+    if (degNum >= 0)
     {
-        current = clamp + degNum;
+        return degNum % NUM_DEG;
     }
 
-    if (degNum >= NUM_DEG)
+    if (degNum < 0)
     {
-        current = degNum - clamp;
+        return NUM_DEG - (abs(degNum) % NUM_DEG);
     }
-    return current;
 }
 
 double Clamp(double degNum, double clamp = NUM_DEG) // cyrcle clamp
 {
-    double current = degNum;
+    if (degNum >= 0)
+    {
+        return fmod(degNum, NUM_DEG);
+    }
 
     if (degNum < 0)
     {
-        current = clamp + degNum;
+        return NUM_DEG - fmod(fabs(degNum), NUM_DEG);
     }
-
-    if (degNum >= NUM_DEG)
-    {
-        current = degNum - clamp;
-    }
-    return current;
 }
 
 class BaseEffect
@@ -73,36 +71,42 @@ public:
     double _width;
 
     int64_t runTime = 0;
-    int64_t startTime = -1;
-    int64_t endTime = -1;
+    int64_t animationStartTime = 0;
+    int64_t startTime = std::numeric_limits<int64_t>::min();
+    int64_t endTime = std::numeric_limits<int64_t>::min();
     int64_t LastRunTime = 0;
 
-    bool isStarted()
+    void setAnimationStartTime(int64_t animationCurrentTime)
     {
-        if (startTime < 0)
+        animationStartTime = animationCurrentTime;
+        startTime = animationCurrentTime + startTime;
+        endTime = animationCurrentTime + endTime;
+    }
+
+    bool isStarted(int64_t now)
+    {
+        if (startTime <= 0)
         {
             return true;
         }
 
-        return startTime < esp_timer_get_time();
+        return startTime < now;
     }
 
-    bool isEnded()
+    bool isEnded(int64_t now)
     {
         if (endTime < 0)
         {
             return false;
         }
-        return endTime < esp_timer_get_time();
+        return endTime < now;
     }
 
-    void Render()
+    void Render(int64_t now)
     {
         ResetData();
 
-        // for (int i = ((NUM_DEG - 1) - _deg) - _width / 2.0; i < (NUM_DEG - _deg) + _width / 2.0; i++)
-        // do we ned reset here, we can set
-        if (isEnded() || !isStarted())
+        if (isEnded(now) || !isStarted(now))
         {
             return;
         }
@@ -117,15 +121,14 @@ public:
         // ResetData();
     }
 
-    explicit BaseEffect(CHSV c, double deg, double w, int rw = 0)
+    explicit BaseEffect(CHSV c, double deg, double w, int rw, int64_t _startTime = std::numeric_limits<int64_t>::min(), int64_t _endTime = MAX_ANIM_LENGHT)
     {
         _c = c;
         _deg = deg;
         _width = w;
         _rWeight = rw;
-
-        // _start_time = esp_timer_get_time();
-        // _last_time = esp_timer_get_time();
+        startTime = _startTime;
+        endTime = _endTime;
 
         for (size_t i = 0; i < NUM_DEG; i++)
         {
@@ -136,39 +139,86 @@ public:
 
 // typedef double (*OneValueChanger)(double, int64_t);
 
-using OneValueChanger = std::function<double(double, int64_t)>;
+using DoubleValueChanger = std::function<double(double, int64_t)>;
+using ColorValueChanger = std::function<CHSV(CHSV, int64_t)>;
+using IntValueChanger = std::function<int(int, int64_t)>;
 // typedef double (*TwoValueChanger)(double, int64_t);
 
 class SetAngleEffect : public BaseEffect
 {
 protected:
 public:
-    OneValueChanger changerStuff;
-    // TwoValueChanger changerStuff2;
+    ColorValueChanger colorChanger;
+    DoubleValueChanger degreeChanger;
+    DoubleValueChanger widthChanger;
+    IntValueChanger weightChanger;
+
+    // ValueChanger colorChanger2;
+    // ValueChanger degreeChanger2;
+    // ValueChanger widthChanger2;
+    // ValueChanger weightChanger2;
 
     void CalcStep(int64_t time) override
     {
-        if (changerStuff != nullptr)
+        auto deltaT = time - startTime;
+        if (colorChanger != nullptr)
         {
-            _deg = changerStuff(_deg, time);
+            _c = colorChanger(_c, deltaT);
         }
-        // if(changerStuff2 != nullptr)
-        // {
-        //     _deg = changerStuff2();
-        // }
+        if (degreeChanger != nullptr)
+        {
+            _deg = degreeChanger(_deg, deltaT);
+        }
+        if (widthChanger != nullptr)
+        {
+            _width = widthChanger(_width, deltaT);
+        }
+        if (weightChanger != nullptr)
+        {
+            _rWeight = weightChanger(_rWeight, deltaT);
+        }
     }
 
-    SetAngleEffect(CHSV c, double deg, OneValueChanger degChanger, double w, int rw = 128) : BaseEffect(c, deg, w, rw), changerStuff(degChanger)
+    SetAngleEffect(
+        CHSV c,
+        ColorValueChanger colorChanger,
+        double deg,
+        DoubleValueChanger degChanger,
+        double w,
+        DoubleValueChanger widthChanger,
+        int rw,
+        IntValueChanger weightChanger,
+        int64_t startTime = std::numeric_limits<int64_t>::min(),
+        int64_t endTime = MAX_ANIM_LENGHT)
+        : BaseEffect(c, deg, w, rw, startTime, endTime),
+          colorChanger(colorChanger),
+          degreeChanger(degChanger),
+          widthChanger(widthChanger),
+          weightChanger(weightChanger)
     {
     }
-    // SetAngleEffect(CHSV c, double deg, TwoValueChanger stuffChange2, double w, int rw = 128) : BaseEffect(c, deg, w, rw), changerStuff(stuffChanger2)
+
+    // SetAngleEffect(
+    //     CHSV c,
+    //     ValueChanger<T> colorChanger,
+    //     double deg,
+    //     ValueChanger<T> degChanger,
+    //     double w,
+    //     ValueChanger<T> widthChanger,
+    //     int rw,
+    //     ValueChanger<T> weightChanger)
+    //     : BaseEffect(c, deg, w, rw),
+    //       colorChanger(colorChanger),
+    //       degreeChanger(degChanger),
+    //       widthChanger(widthChanger),
+    //       weightChanger(weightChanger)
     // {
     // }
 
-    double DurationRatio()
-    {
-        return (double)(esp_timer_get_time() - startTime) / (double)(endTime - startTime);
-    }
+    // double DurationRatio()
+    // {
+    //     return (double)(esp_timer_get_time() - startTime) / (double)(endTime - startTime);
+    // }
 };
 
 // class RotateSector : public SetAngleEffect
@@ -198,27 +248,27 @@ public:
 //     }
 // };
 
-class SetSymbolEffect : public SetAngleEffect
-{
-protected:
-public:
-    int _symNum;
-    void CalcStep(int64_t time) override
-    {
-        SetAngleEffect::CalcStep(time);
-    }
+// class SetSymbolEffect : public SetAngleEffect
+// {
+// protected:
+// public:
+//     int _symNum;
+//     void CalcStep(int64_t time) override
+//     {
+//         SetAngleEffect::CalcStep(time);
+//     }
 
-    SetSymbolEffect(CHSV c, int symbolNumba, int rw = 128) : SetAngleEffect(c, 0, 0, rw)
-    {
-        _c = c;
-        _symNum = symbolNumba;
-        _rWeight = rw;
+//     SetSymbolEffect(CHSV c, int symbolNumba, int rw = 128) : SetAngleEffect(c, 0, 0, rw)
+//     {
+//         _c = c;
+//         _symNum = symbolNumba;
+//         _rWeight = rw;
 
-        int newDeg = (_symNum * SYMBOL_WIDTH) + SYMBOL_OFFSET;
-        _width = SYMBOL_LED_WIDTH;
-        _deg = newDeg;
-    }
-};
+//         int newDeg = (_symNum * SYMBOL_WIDTH) + SYMBOL_OFFSET;
+//         _width = SYMBOL_LED_WIDTH;
+//         _deg = newDeg;
+//     }
+// };
 
 // class Effect
 // {

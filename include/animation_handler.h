@@ -1,34 +1,51 @@
 #pragma once
+
+#include <Arduino.h>
 #include <vector.h>
+#include <memory>
 
 #include "effects.h"
 #include "effect_handler.h"
 #include "debug.h"
 #include "base.h"
 #include "animation.h"
+#include "animations/rotate300.h"
 
 class AnimationHandler
 {
 private:
-    Renderer &_renderer;
-
 public:
-    AnimationHandler(Renderer &renderer);
+    Animation *animationCurrent;
+    AnimationHandler();
     ~AnimationHandler();
-    void Startup();
+    void Setup();
+    void Loop(int64_t now);
 };
 
-AnimationHandler::AnimationHandler(Renderer &renderer) : _renderer(renderer)
+AnimationHandler::AnimationHandler()
 {
 }
 
 AnimationHandler::~AnimationHandler()
 {
+    delete animationCurrent;
 }
 
-void AnimationHandler::Startup()
+void AnimationHandler::Loop(int64_t now)
 {
-    auto newAnimation = new Animation();
-    newAnimation->Setup();
-    newAnimation->Start();
+    if (animationCurrent->isFinished)
+    {
+        delete animationCurrent;
+        Setup();
+    }
+
+    animationCurrent->Update(now);
+}
+
+void AnimationHandler::Setup()
+{
+    animationCurrent = new Animation();
+    // auto effects = createRotate300();
+    auto effects = Trickle();
+    animationCurrent->Setup(effects);
 }

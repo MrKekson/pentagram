@@ -17,7 +17,7 @@ private:
     Renderer &_renderer;
 
 public:
-    std::vector<BaseEffect *> *effects;
+    std::vector<BaseEffect *> *effects = nullptr;
 
     EffectHandler(Renderer &renderer) : _renderer(renderer) {}
     ~EffectHandler()
@@ -28,11 +28,15 @@ public:
         // }
     }
 
-    void Render()
+    void Render(int64_t now)
     {
-        for (auto e : *effects)
+        if (effects == nullptr)
         {
-            e->Render();
+            Serial.write("SUPA MEGA ATOM ERROR");
+        }
+        for (auto e : (*effects))
+        {
+            e->Render(now);
         }
         // cdata vector?
         _renderer.Render(*effects);

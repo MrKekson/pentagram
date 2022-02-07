@@ -22,9 +22,9 @@ void AdditionalCode();
 Renderer renderer = Renderer();
 EffectHandler eHandler = EffectHandler(renderer);
 
-Animation testAnimation = Animation();
+AnimationHandler animHandler = AnimationHandler();
 
-extern int brightness;
+Animation testAnimation = Animation();
 
 void setup()
 {
@@ -33,7 +33,9 @@ void setup()
   AdditionalCode();
 
   renderer.Setup();
-  testAnimation.Setup();
+  animHandler.Setup();
+  // testAnimation.Setup();
+  eHandler.effects = &(animHandler.animationCurrent->effects);
 }
 
 void loop()
@@ -41,10 +43,12 @@ void loop()
   EVERY_N_MILLISECONDS(5)
   {
     // renderer.Render();
+    auto now = esp_timer_get_time();
 
-    testAnimation.Update();
-    eHandler.effects = &(testAnimation.effects);
-    eHandler.Render();
+    // testAnimation.Update();
+    animHandler.Loop(now);
+    eHandler.effects = &(animHandler.animationCurrent->effects);
+    eHandler.Render(now);
 
     // ide valamit
   }
