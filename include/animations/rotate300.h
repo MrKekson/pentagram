@@ -24,13 +24,23 @@ template <class T>
 using ValueChanger = std::function<T(T, int64_t)>;
 
 template <class T>
-ValueChanger<T> createLinearValueChanger(T start, T end, int64_t duration)
+ValueChanger<T> createLinearValueChanger(T valStart, T valEnd, int64_t duration)
 {
-    return [start, end, duration](T currentValue, int64_t deltaT)
+    return [valStart, valEnd, duration](T currentValue, int64_t deltaT)
     {
+        T oneStep;
+        if ((valStart >= 0 && valEnd >= 0) || (valStart < 0 && valEnd < 0))
+        {
+            oneStep = (valEnd - valStart);
+        }
+        else
+        {
+            oneStep = (valEnd - valStart);
+        }
+
         auto progress = (double)deltaT / (double)duration;
-        auto step = (end - start) * (double)progress;
-        return start + step;
+        auto step = oneStep * (double)progress;
+        return valStart + step;
     };
 }
 
@@ -40,57 +50,59 @@ std::vector<BaseEffect *> Trickle()
 
     auto startTime = 0 * SEC_TO_MICRO;
     auto endTime = 12 * SEC_TO_MICRO;
+    auto delayTime = 2 * SEC_TO_MICRO;
+
     auto duration = endTime - startTime;
 
     auto maxWeight = 128;
     auto minWeight = 0;
 
-    auto baseColorEffect = new SetAngleEffect(CHSV(160, 64, 64), nullptr, 0, nullptr, 360, nullptr, maxWeight, nullptr, startTime, endTime);
+    auto baseColorEffect = new SetAngleEffect(CHSV(160, 64, 64), nullptr, 0, nullptr, 360, nullptr, maxWeight, nullptr, startTime - 10000, endTime);
 
     effects.push_back(baseColorEffect);
 
-    int symbolFrom = 2, symbolTo = 7;
+    int symbolFrom = 2, symbolTo = 9;
 
     auto color = CHSV(140, 200, 200);
     auto deg = 90;
     auto width = 50; // degree
 
-    auto sDeg = SymbolToDeg(2);
+    auto sDeg = SymbolToDeg(symbolFrom);
     auto weightLambda = createLinearValueChanger(maxWeight, minWeight, duration);
-    auto effect = new SetAngleEffect(color, nullptr, sDeg, nullptr, SYMBOL_LED_WIDTH, nullptr, maxWeight, weightLambda, startTime, endTime);
+    auto effect = new SetAngleEffect(color, nullptr, sDeg, nullptr, SYMBOL_LED_WIDTH, nullptr, maxWeight, weightLambda, startTime, endTime - delayTime);
     effects.push_back(effect);
 
-    auto sDeg2 = SymbolToDeg(7);
+    auto sDeg2 = SymbolToDeg(symbolTo);
     auto weightLambda2 = createLinearValueChanger(minWeight, maxWeight, duration);
-    auto effect2 = new SetAngleEffect(color, nullptr, sDeg2, nullptr, SYMBOL_LED_WIDTH, nullptr, minWeight, weightLambda2, startTime, endTime);
+    auto effect2 = new SetAngleEffect(color, nullptr, sDeg2, nullptr, SYMBOL_LED_WIDTH, nullptr, minWeight, weightLambda2, startTime + delayTime, endTime);
     effects.push_back(effect2);
 
-    int rnd = 5 + rand() % 10;
+    int rnd = 5 + rand() % 75;
 
-    int trickleWeight = 90;
-    int trickleWidth = 3;
+    int trickleWeight = 70;
+    int trickleWidth = 4;
 
     for (size_t i = 0; i < rnd; i++)
     {
         auto dir = rand() % 2;
-        auto timeRange = (endTime / SEC_TO_MICRO) / 2;
+        auto timeRange = (endTime / SEC_TO_MICRO) - 1;
 
         auto start = (rand() % timeRange) * SEC_TO_MICRO;
-        auto stop = endTime - ((rand() % timeRange) * SEC_TO_MICRO);
+        auto stop = endTime - ((rand() % (timeRange - start / SEC_TO_MICRO)) * SEC_TO_MICRO);
         auto duration = stop - start;
 
         if (dir == 0)
         {
             auto degChanger = createLinearValueChanger(sDeg, sDeg2, duration);
-            auto effect2 = new SetAngleEffect(color, nullptr, sDeg, degChanger, trickleWidth, nullptr, trickleWeight, nullptr, start, stop);
-            effects.push_back(effect2);
+            auto tEffect = new SetAngleEffect(color, nullptr, sDeg, degChanger, trickleWidth, nullptr, trickleWeight, nullptr, start, stop);
+            effects.push_back(tEffect);
         }
         else
         {
-            // auto nDeg = sDeg - sDeg2;
-            auto degChanger = createLinearValueChanger(sDeg, -sDeg2, duration);
-            auto effect2 = new SetAngleEffect(color, nullptr, sDeg, degChanger, trickleWidth, nullptr, trickleWeight, nullptr, start, stop);
-            effects.push_back(effect2);
+
+            auto degChanger = createLinearValueChanger(sDeg, sDeg2 - NUM_DEG, duration);
+            auto tEffect = new SetAngleEffect(color, nullptr, sDeg, degChanger, trickleWidth, nullptr, trickleWeight, nullptr, start, stop);
+            effects.push_back(tEffect);
         }
     }
 

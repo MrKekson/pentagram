@@ -40,18 +40,18 @@ void setup()
 
 void loop()
 {
-  EVERY_N_MILLISECONDS(5)
-  {
-    // renderer.Render();
-    auto now = esp_timer_get_time();
+  // EVERY_N_MILLISECONDS(5)
+  // {
+  // renderer.Render();
+  auto now = esp_timer_get_time();
 
-    // testAnimation.Update();
-    animHandler.Loop(now);
-    eHandler.effects = &(animHandler.animationCurrent->effects);
-    eHandler.Render(now);
+  // testAnimation.Update();
+  animHandler.Loop(now);
+  eHandler.effects = &(animHandler.animationCurrent->effects);
+  eHandler.Render(now);
 
-    // ide valamit
-  }
+  // ide valamit
+  //}
 }
 
 void AdditionalCode()
