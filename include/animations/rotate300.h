@@ -44,12 +44,19 @@ ValueChanger<T> createLinearValueChanger(T valStart, T valEnd, int64_t duration)
     };
 }
 
+std::vector<BaseEffect *> JustBase()
+{
+    auto startTime = 0 * SEC_TO_MICRO;
+    auto endTime = 3 * SEC_TO_MICRO;
+    auto baseColorEffect = new SetAngleEffect(CHSV(160, 64, 64), nullptr, 0, nullptr, 360, nullptr, 128, nullptr, startTime - 10000, endTime);
+}
+
 std::vector<BaseEffect *> Trickle()
 {
     std::vector<BaseEffect *> effects;
 
     auto startTime = 0 * SEC_TO_MICRO;
-    auto endTime = 12 * SEC_TO_MICRO;
+    auto endTime = 6 * SEC_TO_MICRO;
     auto delayTime = 2 * SEC_TO_MICRO;
 
     auto duration = endTime - startTime;

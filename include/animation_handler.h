@@ -44,7 +44,7 @@ void AnimationHandler::Loop(int64_t now)
 
 void AnimationHandler::Setup()
 {
-    animationCurrent = new Animation();
+    animationCurrent = new JustBase();
     // auto effects = createRotate300();
     auto effects = Trickle();
     animationCurrent->Setup(effects);
