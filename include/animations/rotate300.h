@@ -38,7 +38,7 @@ ValueChanger<T> createLinearValueChanger(T valStart, T valEnd, int64_t duration)
             oneStep = (valEnd - valStart);
         }
 
-        auto progress = (double)deltaT / (double)duration;
+        double progress = (double)deltaT / (double)duration;
         auto step = oneStep * (double)progress;
         return valStart + step;
     };
@@ -46,73 +46,88 @@ ValueChanger<T> createLinearValueChanger(T valStart, T valEnd, int64_t duration)
 
 std::vector<BaseEffect *> JustBase()
 {
-    auto startTime = 0 * SEC_TO_MICRO;
-    auto endTime = 3 * SEC_TO_MICRO;
-    auto baseColorEffect = new SetAngleEffect(CHSV(160, 64, 64), nullptr, 0, nullptr, 360, nullptr, 128, nullptr, startTime - 10000, endTime);
+    std::vector<BaseEffect *> effects;
+
+    int64_t startTime = 0 * SEC_TO_MICRO;
+    int64_t endTime = 3 * SEC_TO_MICRO;
+    SetAngleEffect *baseColorEffect = new SetAngleEffect(CHSV(160, 64, 64), nullptr, 0, nullptr, 360, nullptr, 128, nullptr, startTime - 10000, endTime);
+    effects.push_back(baseColorEffect);
+
+    return effects;
 }
 
 std::vector<BaseEffect *> Trickle()
 {
+    Serial.print("Trk Bip ");
     std::vector<BaseEffect *> effects;
 
-    auto startTime = 0 * SEC_TO_MICRO;
-    auto endTime = 6 * SEC_TO_MICRO;
-    auto delayTime = 2 * SEC_TO_MICRO;
+    int startTime = 0 * SEC_TO_MICRO;
+    int endTime = 3 * SEC_TO_MICRO;
+    int delayTime = 1 * SEC_TO_MICRO;
 
-    auto duration = endTime - startTime;
+    int duration = endTime - startTime;
 
-    auto maxWeight = 128;
-    auto minWeight = 0;
+    int maxWeight = 256;
+    int minWeight = 0;
 
-    auto baseColorEffect = new SetAngleEffect(CHSV(160, 64, 64), nullptr, 0, nullptr, 360, nullptr, maxWeight, nullptr, startTime - 10000, endTime);
+    SetAngleEffect *baseColorEffect = new SetAngleEffect(CHSV(160, 64, 64), nullptr, 0, nullptr, 360, nullptr, maxWeight, nullptr, startTime, endTime);
 
     effects.push_back(baseColorEffect);
 
     int symbolFrom = 2, symbolTo = 9;
 
-    auto color = CHSV(140, 200, 200);
-    auto deg = 90;
-    auto width = 50; // degree
+    CHSV color = CHSV(140, 200, 200);
+    int deg = 90;
+    int width = 50; // degree
 
-    auto sDeg = SymbolToDeg(symbolFrom);
-    auto weightLambda = createLinearValueChanger(maxWeight, minWeight, duration);
-    auto effect = new SetAngleEffect(color, nullptr, sDeg, nullptr, SYMBOL_LED_WIDTH, nullptr, maxWeight, weightLambda, startTime, endTime - delayTime);
+    double sDeg = SymbolToDeg(symbolFrom);
+    auto weightLambda = createLinearValueChanger(maxWeight, minWeight, duration - delayTime);
+    SetAngleEffect *effect = new SetAngleEffect(color, nullptr, sDeg, nullptr, SYMBOL_LED_WIDTH, nullptr, maxWeight, weightLambda, startTime, endTime - delayTime);
     effects.push_back(effect);
 
-    auto sDeg2 = SymbolToDeg(symbolTo);
-    auto weightLambda2 = createLinearValueChanger(minWeight, maxWeight, duration);
-    auto effect2 = new SetAngleEffect(color, nullptr, sDeg2, nullptr, SYMBOL_LED_WIDTH, nullptr, minWeight, weightLambda2, startTime + delayTime, endTime);
+    double sDeg2 = SymbolToDeg(symbolTo);
+    auto weightLambda2 = createLinearValueChanger(minWeight, maxWeight, duration - delayTime);
+    SetAngleEffect *effect2 = new SetAngleEffect(color, nullptr, sDeg2, nullptr, SYMBOL_LED_WIDTH, nullptr, minWeight, weightLambda2, startTime + delayTime, endTime);
     effects.push_back(effect2);
-
-    int rnd = 5 + rand() % 75;
+    Serial.print("Trk HALF ");
+    int rnd = 70; // + rand() % 75;
 
     int trickleWeight = 70;
     int trickleWidth = 4;
 
+    Serial.print("+++++++BC FREEHEAP:");
+    Serial.print(ESP.getFreeHeap());
+
     for (size_t i = 0; i < rnd; i++)
     {
-        auto dir = rand() % 2;
-        auto timeRange = (endTime / SEC_TO_MICRO) - 1;
+        int dir = rand() % 2;
+        int timeRange = (endTime / SEC_TO_MICRO) - 1;
 
-        auto start = (rand() % timeRange) * SEC_TO_MICRO;
-        auto stop = endTime - ((rand() % (timeRange - start / SEC_TO_MICRO)) * SEC_TO_MICRO);
-        auto duration = stop - start;
+        int start = (rand() % (timeRange * 5)) * SEC_TO_MICRO / 5;
+
+        int stop = endTime - ((rand() % ((timeRange - start / SEC_TO_MICRO) * 5)) * SEC_TO_MICRO / 5);
+        int duration = stop - start;
 
         if (dir == 0)
         {
             auto degChanger = createLinearValueChanger(sDeg, sDeg2, duration);
-            auto tEffect = new SetAngleEffect(color, nullptr, sDeg, degChanger, trickleWidth, nullptr, trickleWeight, nullptr, start, stop);
+            SetAngleEffect *tEffect = new SetAngleEffect(color, nullptr, sDeg, degChanger, trickleWidth, nullptr, trickleWeight, nullptr, start, stop);
             effects.push_back(tEffect);
         }
         else
         {
 
             auto degChanger = createLinearValueChanger(sDeg, sDeg2 - NUM_DEG, duration);
-            auto tEffect = new SetAngleEffect(color, nullptr, sDeg, degChanger, trickleWidth, nullptr, trickleWeight, nullptr, start, stop);
+            SetAngleEffect *tEffect = new SetAngleEffect(color, nullptr, sDeg, degChanger, trickleWidth, nullptr, trickleWeight, nullptr, start, stop);
             effects.push_back(tEffect);
         }
     }
 
+    Serial.print("   ++++++++ AC FREEHEAP:");
+    Serial.print(ESP.getFreeHeap());
+    Serial.print("\n");
+
+    Serial.print("Trk Bup \n ");
     return effects;
 }
 

@@ -33,14 +33,24 @@ Animation::Animation()
 
 Animation::~Animation()
 {
-    for (auto e : effects)
+
+    Serial.print("Anim Death\n");
+    Serial.print("------- BD FREEHEAP:");
+    Serial.print(ESP.getFreeHeap());
+
+    for (BaseEffect *e : effects)
     {
         delete e;
     }
+    Serial.print(" ------ AD FREEHEAP:");
+    Serial.print(ESP.getFreeHeap());
+    Serial.print("\n");
 }
 
 void Animation::Setup(std::vector<BaseEffect *> P_effects)
 {
+    Serial.print("Anim Setup\n");
+
     _startTimestamp = esp_timer_get_time();
     effects = P_effects;
     for (auto e : effects)
@@ -52,41 +62,23 @@ void Animation::Setup(std::vector<BaseEffect *> P_effects)
             _longestEffectTime = e->endTime;
         }
     }
-
-    // Serial.write("" + effect->startTime);
-    // Serial.write("-----");
-    // Serial.write("" + effect->endTime);
-    // Serial.write("\n");
-    // auto calculatedDeg = new (startingDegree, endingDegree);
-
-    // effect->setDeg();
-}
-
-int Animation::Start()
-{
 }
 
 void Animation::Update(int64_t now)
 {
-
     if ((_startTimestamp + MAX_ANIM_LENGHT) < now || _longestEffectTime < now) // anim végénél is true kell legyen
     {
         isFinished = true;
     }
-
-    // _elapsedTime = esp_timer_get_time() - _startTimestamp;
-
-    // auto newDeg = Calcdeg(strategyDouble strat){}
-
-    for (auto e : effects)
+    else
     {
-        if (e->isStarted(now) && !e->isEnded(now))
-        {
 
-            // Serial.write("-----");
-            // Serial.write("\n");
-            e->CalcStep(now);
+        for (BaseEffect *e : effects)
+        {
+            if (e->isStarted(now) && !e->isEnded(now))
+            {
+                e->CalcStep(now);
+            }
         }
     }
-    //  update effect parameters here
 }

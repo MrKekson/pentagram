@@ -20,6 +20,7 @@ struct CData
         rWeight = rw;
         c = CHSV(col);
     }
+
     int rWeight = 0; /*render weight*/
     CHSV c;          /* _data */
 };
@@ -65,22 +66,26 @@ protected:
 
 public:
     CHSV _c;
-    CData _data[NUM_DEG];
-    int _rWeight;
     double _deg;
     double _width;
+    int _rWeight;
 
-    int64_t runTime = 0;
-    int64_t animationStartTime = 0;
-    int64_t startTime = std::numeric_limits<int64_t>::min();
-    int64_t endTime = std::numeric_limits<int64_t>::min();
-    int64_t LastRunTime = 0;
+    int64_t runTime;
+    int64_t animationStartTime;
+    int64_t startTime;
+    int64_t endTime;
+    int64_t LastRunTime;
+
+    int64_t localStartTime;
+    int64_t localEndTime;
+
+    CData _data[NUM_DEG];
 
     void setAnimationStartTime(int64_t animationCurrentTime)
     {
         animationStartTime = animationCurrentTime;
-        startTime = animationCurrentTime + startTime;
-        endTime = animationCurrentTime + endTime;
+        startTime = animationCurrentTime + localStartTime;
+        endTime = animationCurrentTime + localEndTime;
     }
 
     bool isStarted(int64_t now)
@@ -105,11 +110,11 @@ public:
     void Render(int64_t now)
     {
         ResetData();
-
         if (isEnded(now) || !isStarted(now))
         {
             return;
         }
+
         for (int i = (_deg)-_width / 2.0; i < _deg + _width / 2.0; i++)
         {
             _data[Clamp(i)] = CData(_rWeight, _c);
@@ -121,20 +126,34 @@ public:
         // ResetData();
     }
 
-    explicit BaseEffect(CHSV c, double deg, double w, int rw, int64_t _startTime = std::numeric_limits<int64_t>::min(), int64_t _endTime = MAX_ANIM_LENGHT)
+    explicit BaseEffect(
+        CHSV c,
+        double deg,
+        double w,
+        int rw,
+        int64_t st = std::numeric_limits<int64_t>::min(),
+        int64_t et = std::numeric_limits<int64_t>::min()) : _c(c),
+                                                            _deg(deg),
+                                                            _width(w),
+                                                            _rWeight(rw),
+                                                            localStartTime(st),
+                                                            localEndTime(et)
     {
-        _c = c;
-        _deg = deg;
-        _width = w;
-        _rWeight = rw;
-        startTime = _startTime;
-        endTime = _endTime;
-
         for (size_t i = 0; i < NUM_DEG; i++)
         {
             _data[i] = CData(_rWeight, _c);
         }
     }
+
+    // ~BaseEffect()
+    // {
+    //     for (auto &i : _data)
+    //     {
+    //         delete &i;
+    //     }
+
+    //     delete this;
+    // }
 };
 
 // typedef double (*OneValueChanger)(double, int64_t);

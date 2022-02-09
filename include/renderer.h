@@ -67,7 +67,7 @@ void Renderer::Render(const std::vector<BaseEffect *> &effectDatas)
                 }
             }
 
-            _data[i] = CHSV(0, 128, 128);
+            _data[i] = CHSV(0, 0, 0);
 
             if (rcount > 0)
             {
@@ -118,12 +118,11 @@ void Renderer::Render(const std::vector<BaseEffect *> &effectDatas)
     else
     {
         // Error, random colour in every 2sec
-        auto c = CRGB(rand() % 128, rand() % 128, rand() % 128);
+        auto c = CRGB(255, 0, 0);
         for (int i = 0; i < NUM_LEDS; ++i)
         {
-            _leds[i] = c;
+            _leds[i] = CRGB(255, 0, 0);
         }
-        delay(2000);
     }
     FastLED.show();
 }

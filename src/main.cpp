@@ -17,6 +17,11 @@
 
 // CHSV hsv_leds[NUM__LEDS];
 // CRGB leds[NUM__LEDS];
+
+long framecount = 0;
+int renderTime, loopTime, loopCount;
+uint32_t meminfo;
+
 void AdditionalCode();
 
 Renderer renderer = Renderer();
@@ -24,13 +29,11 @@ EffectHandler eHandler = EffectHandler(renderer);
 
 AnimationHandler animHandler = AnimationHandler();
 
-Animation testAnimation = Animation();
-
 void setup()
 {
   Serial.begin(115200);
 
-  AdditionalCode();
+  // AdditionalCode();
 
   renderer.Setup();
   animHandler.Setup();
@@ -40,18 +43,41 @@ void setup()
 
 void loop()
 {
-  // EVERY_N_MILLISECONDS(5)
-  // {
-  // renderer.Render();
-  auto now = esp_timer_get_time();
+  EVERY_N_MILLISECONDS(20)
+  {
+    loopCount++;
+    // renderer.Render();
+    int64_t now = esp_timer_get_time();
+    eHandler.Render(now);
+    int rTime = esp_timer_get_time() - now;
+    renderTime = (renderTime + rTime + rTime) / 3;
 
-  // testAnimation.Update();
-  animHandler.Loop(now);
-  eHandler.effects = &(animHandler.animationCurrent->effects);
-  eHandler.Render(now);
+    // testAnimation.Update();
+    animHandler.Loop(now);
+    int lTime = esp_timer_get_time() - now;
+    loopTime = (loopTime + lTime + lTime) / 3;
+    eHandler.effects = &(animHandler.animationCurrent->effects);
+  }
 
-  // ide valamit
-  //}
+  EVERY_N_MILLISECONDS(1000)
+  {
+    Serial.print(loopCount);
+    Serial.print("FPS -- ");
+    Serial.print(renderTime / 1000);
+    Serial.print("Rt -- ");
+    Serial.print(loopTime / 1000);
+    Serial.print("Lt  ");
+    auto memDelta = ESP.getFreeHeap() - meminfo;
+    Serial.print(memDelta);
+    Serial.print(" M ");
+
+    meminfo = ESP.getFreeHeap();
+    Serial.print(meminfo);
+    Serial.print("\n");
+    loopCount = 0;
+    renderTime = 0;
+    loopTime = 0;
+  }
 }
 
 void AdditionalCode()

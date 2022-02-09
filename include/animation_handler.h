@@ -14,6 +14,9 @@
 class AnimationHandler
 {
 private:
+    u_int _loopCount = 0;
+    u_int _setupCount = 0;
+
 public:
     Animation *animationCurrent;
     AnimationHandler();
@@ -33,6 +36,7 @@ AnimationHandler::~AnimationHandler()
 
 void AnimationHandler::Loop(int64_t now)
 {
+    _loopCount++;
     if (animationCurrent->isFinished)
     {
         delete animationCurrent;
@@ -44,8 +48,24 @@ void AnimationHandler::Loop(int64_t now)
 
 void AnimationHandler::Setup()
 {
-    animationCurrent = new JustBase();
-    // auto effects = createRotate300();
-    auto effects = Trickle();
+    Serial.print(_loopCount);
+    Serial.print(":loop Creating Anim --- ");
+    animationCurrent = new Animation();
+
+    Serial.print("Creating Effect ----");
+
+    _setupCount++;
+    Serial.print("Setup Count ----");
+    Serial.print(_setupCount);
+    Serial.print("\n");
+
+    std::vector<BaseEffect *> effects = Trickle();
+    Serial.print(effects.size());
+    Serial.print("Adding Effect ");
+    size_t bytes = sizeof(effects[0]) * effects.size();
+    Serial.print(" ESize: ");
+    Serial.print(bytes);
+
     animationCurrent->Setup(effects);
+    Serial.print("DONE \n");
 }
