@@ -54,15 +54,15 @@ double Clamp(double degNum, double clamp = NUM_DEG) // cyrcle clamp
 class BaseEffect
 {
 protected:
-    void ResetData()
-    {
-        CData oneData = CData(0, _c);
+    // void ResetData()
+    // {
+    //     CData oneData = CData(0, _c);
 
-        for (size_t i = 0; i < NUM_DEG; i++)
-        {
-            _data[i] = oneData;
-        }
-    }
+    //     for (size_t i = 0; i < NUM_DEG; i++)
+    //     {
+    //         _data[i] = oneData;
+    //     }
+    // }
 
 public:
     CHSV _c;
@@ -79,7 +79,7 @@ public:
     int64_t localStartTime;
     int64_t localEndTime;
 
-    CData _data[NUM_DEG];
+    // CData _data[NUM_DEG];
 
     void setAnimationStartTime(int64_t animationCurrentTime)
     {
@@ -107,18 +107,23 @@ public:
         return endTime < now;
     }
 
-    void Render(int64_t now)
+    bool Render(int64_t now)
     {
-        ResetData();
-        if (isEnded(now) || !isStarted(now))
-        {
-            return;
-        }
+        // bool chn = false;
+        // ResetData();
+        // if (isEnded(now) || !isStarted(now))
+        // {
+        //     return;
+        // }
 
-        for (int i = (_deg)-_width / 2.0; i < _deg + _width / 2.0; i++)
-        {
-            _data[Clamp(i)] = CData(_rWeight, _c);
-        }
+        // chn = true;
+
+        // for (int i = (_deg)-_width / 2.0; i < _deg + _width / 2.0; i++)
+        // {
+        //     _data[Clamp(i)] = CData(_rWeight, _c);
+        // }
+        // return chn;
+        return true;
     }
 
     virtual void CalcStep(int64_t time)
@@ -139,10 +144,10 @@ public:
                                                             localStartTime(st),
                                                             localEndTime(et)
     {
-        for (size_t i = 0; i < NUM_DEG; i++)
-        {
-            _data[i] = CData(_rWeight, _c);
-        }
+        // for (size_t i = 0; i < NUM_DEG; i++)
+        // {
+        //     _data[i] = CData(_rWeight, _c);
+        // }
     }
 
     // ~BaseEffect()

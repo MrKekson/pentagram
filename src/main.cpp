@@ -24,8 +24,7 @@ uint32_t meminfo;
 
 void AdditionalCode();
 
-Renderer renderer = Renderer();
-EffectHandler eHandler = EffectHandler(renderer);
+// EffectHandler eHandler = EffectHandler(renderer);
 
 AnimationHandler animHandler = AnimationHandler();
 
@@ -35,10 +34,9 @@ void setup()
 
   // AdditionalCode();
 
-  renderer.Setup();
   animHandler.Setup();
-  // testAnimation.Setup();
-  eHandler.effects = &(animHandler.animationCurrent->effects);
+  //  testAnimation.Setup();
+  //  eHandler.effects = &(animHandler.animationCurrent->effects);
 }
 
 void loop()
@@ -48,7 +46,7 @@ void loop()
     loopCount++;
     // renderer.Render();
     int64_t now = esp_timer_get_time();
-    eHandler.Render(now);
+    // eHandler.Render(now);
     int rTime = esp_timer_get_time() - now;
     renderTime = (renderTime + rTime + rTime) / 3;
 
@@ -56,28 +54,28 @@ void loop()
     animHandler.Loop(now);
     int lTime = esp_timer_get_time() - now;
     loopTime = (loopTime + lTime + lTime) / 3;
-    eHandler.effects = &(animHandler.animationCurrent->effects);
+    // eHandler.effects = &(animHandler.animationCurrent->effects);
   }
 
-  EVERY_N_MILLISECONDS(1000)
-  {
-    Serial.print(loopCount);
-    Serial.print("FPS -- ");
-    Serial.print(renderTime / 1000);
-    Serial.print("Rt -- ");
-    Serial.print(loopTime / 1000);
-    Serial.print("Lt  ");
-    auto memDelta = ESP.getFreeHeap() - meminfo;
-    Serial.print(memDelta);
-    Serial.print(" M ");
+  // EVERY_N_MILLISECONDS(1000)
+  // {
+  //   Serial.print(loopCount);
+  //   Serial.print("FPS -- ");
+  //   Serial.print(renderTime / 1000);
+  //   Serial.print("Rt -- ");
+  //   Serial.print(loopTime / 1000);
+  //   Serial.print("Lt  ");
+  //   auto memDelta = ESP.getFreeHeap() - meminfo;
+  //   Serial.print(memDelta);
+  //   Serial.print(" M ");
 
-    meminfo = ESP.getFreeHeap();
-    Serial.print(meminfo);
-    Serial.print("\n");
-    loopCount = 0;
-    renderTime = 0;
-    loopTime = 0;
-  }
+  //   meminfo = ESP.getFreeHeap();
+  //   Serial.print(meminfo);
+  //   Serial.print("\n");
+  //   loopCount = 0;
+  //   renderTime = 0;
+  //   loopTime = 0;
+  // }
 }
 
 void AdditionalCode()

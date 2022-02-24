@@ -42,6 +42,7 @@ Animation::~Animation()
     {
         delete e;
     }
+    
     Serial.print(" ------ AD FREEHEAP:");
     Serial.print(ESP.getFreeHeap());
     Serial.print("\n");

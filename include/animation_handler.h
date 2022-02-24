@@ -5,7 +5,7 @@
 #include <memory>
 
 #include "effects.h"
-#include "effect_handler.h"
+#include "renderer.h"
 #include "debug.h"
 #include "base.h"
 #include "animation.h"
@@ -16,6 +16,7 @@ class AnimationHandler
 private:
     u_int _loopCount = 0;
     u_int _setupCount = 0;
+    Renderer _rndr;
 
 public:
     Animation *animationCurrent;
@@ -23,6 +24,8 @@ public:
     ~AnimationHandler();
     void Setup();
     void Loop(int64_t now);
+
+    void ProcessAnimation();
 };
 
 AnimationHandler::AnimationHandler()
@@ -36,18 +39,23 @@ AnimationHandler::~AnimationHandler()
 
 void AnimationHandler::Loop(int64_t now)
 {
+    Serial.print(":loooooooooooooooooooooooooooooooooop");
     _loopCount++;
     if (animationCurrent->isFinished)
     {
         delete animationCurrent;
-        Setup();
+        ProcessAnimation();
     }
 
     animationCurrent->Update(now);
+    Serial.print("----------------------------------");
+    _rndr.Render(animationCurrent->effects);
+    Serial.print("********************\n");
 }
 
-void AnimationHandler::Setup()
+void AnimationHandler::ProcessAnimation()
 {
+
     Serial.print(_loopCount);
     Serial.print(":loop Creating Anim --- ");
     animationCurrent = new Animation();
@@ -68,4 +76,10 @@ void AnimationHandler::Setup()
 
     animationCurrent->Setup(effects);
     Serial.print("DONE \n");
+}
+
+void AnimationHandler::Setup()
+{
+    _rndr.Setup();
+    ProcessAnimation();
 }
