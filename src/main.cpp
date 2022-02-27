@@ -1,46 +1,214 @@
 #include <Arduino.h>
+#include <FastLED.h>
+#include <ArduinoJson.h>
+
+#include "SPIFFS.h"
+
 // #include <WiFi.h>
 // #include <WiFiClient.h>
 // #include <WiFiAP.h>
 
-#include <FastLED.h>
+#include "renderer.h"
+#include "animation_handler.h"
 
-#define NUM__LEDS 150
-#define NUM__EX_LEDS 1
-#define NUM__COLORS 8
+#define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000 / x)
+//#define ARRAYLENGTH(x) (sizeof(x) / sizeof(x[0]))
 
-#define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000/x)
-#define ARRAYLENGTH(x) (sizeof(x)/sizeof(x[0]))
+// CHSV hsv_leds[NUM__LEDS];
+// CRGB leds[NUM__LEDS];
 
-CRGB leds[NUM__LEDS];
-int g_brightness = 159;
+long framecount = 0;
+int renderTime, loopTime, loopCount;
+uint32_t meminfo;
 
-void copyToCRGB()
+void AdditionalCode();
+
+// EffectHandler eHandler = EffectHandler(renderer);
+
+AnimationHandler animHandler = AnimationHandler();
+
+void setup()
 {
-    for(int i = 0; i < NUM__LEDS; i++)
-    {
-        leds[i] = CRGB(200,200,200); // CRGB(hsv_leds[i + WAVE_SIZE]);
-    }
+  Serial.begin(115200);
+
+  // AdditionalCode();
+
+  animHandler.Setup();
+  //  testAnimation.Setup();
+  //  eHandler.effects = &(animHandler.animationCurrent->effects);
 }
 
-void setup() {
-  // put your setup code here, to run once:
-  FastLED.addLeds<NEOPIXEL, 27>(leds, NUM__LEDS);
+void loop()
+{
+  EVERY_N_MILLISECONDS(20)
+  {
+    loopCount++;
+    // renderer.Render();
+    int64_t now = esp_timer_get_time();
+    // eHandler.Render(now);
+    int rTime = esp_timer_get_time() - now;
+    renderTime = (renderTime + rTime + rTime) / 3;
 
-  FastLED.setBrightness(g_brightness);
-  FastLED.clear();
+    // testAnimation.Update();
+    animHandler.Loop(now);
+    int lTime = esp_timer_get_time() - now;
+    loopTime = (loopTime + lTime + lTime) / 3;
+    // eHandler.effects = &(animHandler.animationCurrent->effects);
+  }
+
+  EVERY_N_MILLISECONDS(1000)
+  {
+    Serial.print(loopCount);
+    Serial.print("FPS -- ");
+    Serial.print(renderTime / 1000);
+    Serial.print("Rt -- ");
+    Serial.print(loopTime / 1000);
+    Serial.print("Lt  ");
+    uint32_t memDelta = meminfo - ESP.getFreeHeap();
+    Serial.print(memDelta);
+    Serial.print(" M ");
+
+    meminfo = ESP.getFreeHeap();
+    Serial.print(meminfo);
+    Serial.print("\n");
+    loopCount = 0;
+    renderTime = 0;
+    loopTime = 0;
+  }
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
-    leds[0] = CRGB::White;
-    FastLED.show();
-    delay(30);
+void AdditionalCode()
+{
+  int64_t t = esp_timer_get_time();
 
-    leds[0] = CRGB::Black;
-    FastLED.show();
-    delay(30);
+  if (!SPIFFS.begin(true))
+  {
+    Serial.println("An Error has occurred while mounting SPIFFS");
+    return;
+  }
+
+  File file = SPIFFS.open("/test.json");
+  if (!file)
+  {
+    Serial.println("Failed to open file for reading");
+    return;
+  }
+
+  Serial.println("File Content:");
+  size_t fSize = file.size();
+
+  char jsonFileData[fSize] = {'\0'};
+
+  u_int i = 0;
+
+  while (file.available())
+  {
+    jsonFileData[i] = file.read();
+    Serial.write(jsonFileData[i]);
+    i++;
+  }
+  jsonFileData[i] = '\0';
+
+  file.close();
+
+  u_int jsonSize = fSize * 1.04; // ke?
+  DynamicJsonDocument doc(jsonSize);
+
+  DeserializationError error = deserializeJson(doc, jsonFileData);
+
+  if (error)
+  {
+    Serial.print(F("deserializeJson() failed: "));
+    Serial.println(error.f_str());
+    return;
+  }
+
+  // const char* name = doc["name"];
+  // Serial.println("name:");
+  // Serial.println(name);
 }
+
+// void set(CRGB c)
+// {
+//   for (int i = 0; i < NUM__LEDS; ++i)
+//   {
+//     leds[i] = c;
+//   }
+// }
+
+// void copyToCRGB()
+// {
+//   for (int i = 0; i < NUM_LEDS; i++)
+//   {
+//     CHSV color(171, 255, 255);
+//     auto v = CHSV(32,32,42);
+//     CRGB c2 = CRGB(CHSV(32, 32, 128));
+//     leds[i].setHSV(color.h, color.s, color.v); //CRGB(64, 64, 64);  //CRGB(*hsv_leds[i]);
+//   }
+// }
+
+// void reset(CRGB color)
+// {
+//   fill_solid(leds, NUM__LEDS, color);
+// }
+
+// void setup()
+// {
+//   //Serial.begin(9600);
+//   // put your setup code here, to run once:
+//   FastLED.addLeds<NEOPIXEL, 27>(leds, NUM__LEDS);
+
+//   FastLED.setBrightness(brightness);
+//   FastLED.clear();
+
+//   fill_solid(leds, NUM__LEDS, CRGB::DeepSkyBlue);
+//   //reset(CRGB(64, 64, 64));
+//   //copyToCRGB();
+// }
+
+// #define SEGMENT_SIZE 1
+
+// int maxNumberOfLoops = NUM__LEDS;
+// int loopCounter = 0;
+
+// void waveEffect()
+// {
+//   // EVERY_N_MILLISECONDS(200)
+//   {
+//     CRGB c = CRGB(32, 32, 128);
+//     leds[loopCounter] = c;
+//     leds[loopCounter + SEGMENT_SIZE] = c;
+//     leds[loopCounter + SEGMENT_SIZE * 2] = c;
+//     leds[loopCounter + SEGMENT_SIZE * 3] = c;
+
+//     if (loopCounter == maxNumberOfLoops - 1)
+//     {
+//       loopCounter = 0;
+//       reset(CRGB(0, 0, 0));
+//       return;
+//     }
+//     //Serial.println("L: loopCounter");
+//     ++loopCounter;
+//   }
+// }
+
+// void loop()
+// {
+//   put your main code here, to run repeatedly:
+
+//   waveEffect();
+//   EVERY_N_MILLISECONDS(300)
+//   {
+//     for (int i = 0; i < NUM__LEDS; i++)
+//     {
+//       leds[i] = CRGB::Red;
+//     }
+//   }
+//   FastLED.setBrightness(brightness);
+//   FastLED.show();
+//   Render();
+//   delay(200);
+// }
 
 // #define WAVE_SIZE 3
 
@@ -206,7 +374,6 @@ void loop() {
 // bool pulseInProgress = false;
 
 // int sinValue = 0;
-
 
 // void dimTo(int value) {
 //     for(int i = 0; i < NUM__LEDS; ++i)
