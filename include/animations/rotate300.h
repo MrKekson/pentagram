@@ -46,7 +46,7 @@ ValueChanger<T> createBezierValueChanger(T valStart, T valEnd, int64_t duration)
     };
 }
 
-std::vector<BaseEffect *> LightAndHold(std::vector<SData> symbols, int startTime, int endTime)
+std::vector<BaseEffect *> LightAndHold(std::vector<SData> symbols, int startTime, int endTime, int holdType = 0)
 {
     std::vector<BaseEffect *> effects;
 
@@ -72,7 +72,7 @@ std::vector<BaseEffect *> LightAndHold(std::vector<SData> symbols, int startTime
 
         double sDeg = SymbolToDeg(s.symbol);
 
-        ValueChanger<int> weightLambda = createBezierValueChanger(maxWeight, minWeight, duration);
+        ValueChanger<int> weightLambda = createSinusValueChanger(maxWeight, minWeight, duration);
         BaseEffect *effect = new BaseEffect(color, nullptr, sDeg, nullptr, SYMBOL_LED_WIDTH, nullptr, maxWeight, weightLambda, startTime, endTime);
         effects.push_back(effect);
     }
@@ -112,7 +112,7 @@ std::vector<BaseEffect *> Trickle(std::vector<std::pair<SData, SData>> symbols, 
         BaseEffect *effect2 = new BaseEffect(color, nullptr, sDeg2, nullptr, SYMBOL_LED_WIDTH, nullptr, minWeight, weightLambda2, startTime + delayTime, endTime);
         effects.push_back(effect2);
         Serial.print("Trk HALF ");
-        int rnd = 5 + rand() % 20;
+        int rnd = 15 + rand() % 30;
 
         int trickleWeight = (maxWeight / rnd) + 64;
         int trickleWidth = 2;
@@ -127,7 +127,7 @@ std::vector<BaseEffect *> Trickle(std::vector<std::pair<SData, SData>> symbols, 
             int stop = endTime - ((rand() % ((timeRange - start / SEC_TO_MICRO) * 5)) * SEC_TO_MICRO / 5);
             int duration = stop - start;
 
-            if (dir == 0)
+            if (dir == 1)
             {
                 ValueChanger<double> degChanger = createBezierValueChanger(sDeg, sDeg2, duration);
                 BaseEffect *tEffect = new BaseEffect(color, nullptr, sDeg, degChanger, trickleWidth, nullptr, trickleWeight, nullptr, start, stop);
@@ -135,8 +135,13 @@ std::vector<BaseEffect *> Trickle(std::vector<std::pair<SData, SData>> symbols, 
             }
             else
             {
-
-                ValueChanger<double> degChanger = createLinearValueChanger(sDeg, sDeg2 - NUM_DEG, duration);
+                int _sDeg = sDeg, _sDeg2 = sDeg2 - NUM_DEG;
+                if (sDeg > sDeg2)
+                {
+                    _sDeg = sDeg - NUM_DEG;
+                    _sDeg2 = sDeg2;
+                }
+                ValueChanger<double> degChanger = createLinearValueChanger(_sDeg, _sDeg2, duration);
                 BaseEffect *tEffect = new BaseEffect(color, nullptr, sDeg, degChanger, trickleWidth, nullptr, trickleWeight, nullptr, start, stop);
                 effects.push_back(tEffect);
             }

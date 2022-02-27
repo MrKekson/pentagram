@@ -27,7 +27,7 @@ public:
 
     void ProcessAnimation();
 
-    CHSV baseColor;
+    CHSV baseColor, effectColor;
     std::vector<SData> symbolData;
     std::vector<std::pair<SData, SData>> CreateRandomSymbolPairs();
 };
@@ -79,14 +79,12 @@ std::vector<std::pair<SData, SData>> AnimationHandler::CreateRandomSymbolPairs()
 
 void AnimationHandler::ProcessAnimation()
 {
-    int ePlay = rand() % 1; // shoulb be weighed chnage chooser, then weighted effect chances
+    int ePlay = 1; // rand() % 2; // shoulb be weighed chnage chooser, then weighted effect chances
 
     int animEndTime = (3 + rand() % 7) * SEC_TO_MICRO; // should be diff for chnage and hold
 
     animationCurrent = new Animation();
     std::vector<BaseEffect *> effects;
-
-    int rnd = rand() % 12;
 
     switch (ePlay)
     {
@@ -102,7 +100,7 @@ void AnimationHandler::ProcessAnimation()
     }
 
     // Add background effect once here
-    BaseEffect *backgroundEffect = new BaseEffect(baseColor, nullptr, 0, nullptr, 360, nullptr, 8, nullptr, 0, animEndTime);
+    BaseEffect *backgroundEffect = new BaseEffect(baseColor, nullptr, 0, nullptr, 360, nullptr, 48, nullptr, 0, animEndTime);
     effects.push_back(backgroundEffect);
 
     animationCurrent->Setup(effects);
@@ -131,11 +129,12 @@ void AnimationHandler::ProcessAnimation()
 
 void AnimationHandler::Setup()
 {
-    baseColor = CHSV(160, 92, 64);
+    baseColor = CHSV(160, 64, 80);
+    effectColor = CHSV(180, 192, 192);
 
-    symbolData.push_back(SData(CHSV(180, 128, 128), 0, 192));
-    symbolData.push_back(SData(CHSV(120, 128, 128), 11, 192));
-    symbolData.push_back(SData(CHSV(0, 128, 128), 9, 192));
+    symbolData.push_back(SData(effectColor, 0, 350));
+    symbolData.push_back(SData(effectColor, 11, 300));
+    // symbolData.push_back(SData(CHSV(0, 128, 128), 9, 192));
 
     _rndr.Setup();
     ProcessAnimation();

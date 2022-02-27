@@ -52,7 +52,7 @@ public:
             return true;
         }
 
-        return startTime <= now;
+        return startTime < now;
     }
 
     bool isEnded(int64_t now)
