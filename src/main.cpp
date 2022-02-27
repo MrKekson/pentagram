@@ -9,7 +9,6 @@
 // #include <WiFiAP.h>
 
 #include "renderer.h"
-#include "effect_handler.h"
 #include "animation_handler.h"
 
 #define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000 / x)
@@ -57,30 +56,30 @@ void loop()
     // eHandler.effects = &(animHandler.animationCurrent->effects);
   }
 
-  // EVERY_N_MILLISECONDS(1000)
-  // {
-  //   Serial.print(loopCount);
-  //   Serial.print("FPS -- ");
-  //   Serial.print(renderTime / 1000);
-  //   Serial.print("Rt -- ");
-  //   Serial.print(loopTime / 1000);
-  //   Serial.print("Lt  ");
-  //   auto memDelta = ESP.getFreeHeap() - meminfo;
-  //   Serial.print(memDelta);
-  //   Serial.print(" M ");
+  EVERY_N_MILLISECONDS(1000)
+  {
+    Serial.print(loopCount);
+    Serial.print("FPS -- ");
+    Serial.print(renderTime / 1000);
+    Serial.print("Rt -- ");
+    Serial.print(loopTime / 1000);
+    Serial.print("Lt  ");
+    uint32_t memDelta = meminfo - ESP.getFreeHeap();
+    Serial.print(memDelta);
+    Serial.print(" M ");
 
-  //   meminfo = ESP.getFreeHeap();
-  //   Serial.print(meminfo);
-  //   Serial.print("\n");
-  //   loopCount = 0;
-  //   renderTime = 0;
-  //   loopTime = 0;
-  // }
+    meminfo = ESP.getFreeHeap();
+    Serial.print(meminfo);
+    Serial.print("\n");
+    loopCount = 0;
+    renderTime = 0;
+    loopTime = 0;
+  }
 }
 
 void AdditionalCode()
 {
-  auto t = esp_timer_get_time;
+  int64_t t = esp_timer_get_time();
 
   if (!SPIFFS.begin(true))
   {
@@ -96,7 +95,7 @@ void AdditionalCode()
   }
 
   Serial.println("File Content:");
-  auto fSize = file.size();
+  size_t fSize = file.size();
 
   char jsonFileData[fSize] = {'\0'};
 
