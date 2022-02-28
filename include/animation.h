@@ -17,17 +17,19 @@ private:
 public:
     bool isFinished = false;
 
-    Animation();
+    SData data;
+
+    Animation(SData dta);
     ~Animation();
 
     std::vector<BaseEffect *> effects;
 
     int Start();
     void Setup(std::vector<BaseEffect *> effects);
-    void Update(int64_t now);
+    void Update();
 };
 
-Animation::Animation()
+Animation::Animation(SData dta) : data(dta)
 {
 }
 
@@ -66,9 +68,10 @@ void Animation::Setup(std::vector<BaseEffect *> P_effects)
     }
 }
 
-void Animation::Update(int64_t now)
+void Animation::Update()
 {
-    if ((_startTimeStamp + MAX_ANIM_LENGHT) < now || _longestEffectTime < now) // anim végénél is true kell legyen
+    int64_t now = esp_timer_get_time();
+    if ((_startTimeStamp + MAX_ANIM_LENGHT) < now || _longestEffectTime <= now) // anim végénél is true kell legyen
     {
         isFinished = true;
         return;
@@ -76,12 +79,9 @@ void Animation::Update(int64_t now)
 
     for (BaseEffect *e : effects)
     {
-        e->isRunning = false;
-        if (e->isStarted(now) && !e->isEnded(now))
-        {
-            e->CalcStep(now);
-            e->isRunning = true;
-        }
+        // e->isRunning = false;
+        e->CalcStep();
+        // e->isRunning = true;
 
         // Serial.print(e->isStarted(now));
         // Serial.print(!e->isEnded(now));

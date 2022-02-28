@@ -46,7 +46,7 @@ ValueChanger<T> createBezierValueChanger(T valStart, T valEnd, int64_t duration)
     };
 }
 
-std::vector<BaseEffect *> LightAndHold(std::vector<SData> symbols, int startTime, int endTime, int holdType = 0)
+std::vector<BaseEffect *> LightAndHold(SData startData, SData endData, int startTime, int endTime, int holdType = 0)
 {
     std::vector<BaseEffect *> effects;
 
@@ -60,59 +60,56 @@ std::vector<BaseEffect *> LightAndHold(std::vector<SData> symbols, int startTime
     //     break;
     // }
 
-    for (SData s : symbols)
+    // for (SData s : symbol.first)
     {
-        int maxWeight = s.weight;
+        int maxWeight = startData.weight;
+        CHSV color = startData.c;
+        int sDeg = SymbolToDeg(startData.symbol);
+
         int baseWeight = maxWeight / 4;
         int minWeight = 0;
 
-        CHSV color = s.c;
-
         int64_t duration = endTime - startTime;
 
-        double sDeg = SymbolToDeg(s.symbol);
-
-        ValueChanger<int> weightLambda = createSinusValueChanger(maxWeight, minWeight, duration);
-        BaseEffect *effect = new BaseEffect(color, nullptr, sDeg, nullptr, SYMBOL_LED_WIDTH, nullptr, maxWeight, weightLambda, startTime, endTime);
+        // ValueChanger<int> weightLambda = createSinusValueChanger(maxWeight, minWeight, duration);
+        BaseEffect *effect = new BaseEffect(color, nullptr, sDeg, nullptr, SYMBOL_LED_WIDTH, nullptr, maxWeight, nullptr, startTime, endTime, true);
         effects.push_back(effect);
     }
 
     return effects;
 }
 
-std::vector<BaseEffect *> Trickle(std::vector<std::pair<SData, SData>> symbols, int startTime, int endTime)
+std::vector<BaseEffect *> Trickle(SData startData, SData endData, int startTime, int endTime)
 {
     std::vector<BaseEffect *> effects;
 
-    for (std::pair<SData, SData> s : symbols)
+    // for (std::pair<SData, SData> s : symbols)
     {
-        SData fromData = s.first;
-        SData toData = s.second;
-        int symbolFrom = fromData.symbol;
-        int symbolTo = toData.symbol;
+        int symbolFrom = startData.symbol;
+        int symbolTo = endData.symbol;
 
         int64_t duration = endTime - startTime;
 
         int delayTime = 1 * SEC_TO_MICRO; // duration/something maybe
 
-        int maxWeight = s.first.weight;
+        int maxWeight = startData.weight;
         int minWeight = 0;
 
-        CHSV color = s.first.c;
+        CHSV color = startData.c;
         int deg = 90;
         int width = 50; // degree
 
         double sDeg = SymbolToDeg(symbolFrom);
         ValueChanger<int> weightLambda = createLinearValueChanger(maxWeight, minWeight, duration - delayTime);
-        BaseEffect *effect = new BaseEffect(color, nullptr, sDeg, nullptr, SYMBOL_LED_WIDTH, nullptr, maxWeight, weightLambda, startTime, endTime - delayTime);
+        BaseEffect *effect = new BaseEffect(color, nullptr, sDeg, nullptr, SYMBOL_LED_WIDTH, nullptr, maxWeight, weightLambda, startTime, endTime - delayTime, true);
         effects.push_back(effect);
 
         double sDeg2 = SymbolToDeg(symbolTo);
         ValueChanger<int> weightLambda2 = createLinearValueChanger(minWeight, maxWeight, duration - delayTime);
-        BaseEffect *effect2 = new BaseEffect(color, nullptr, sDeg2, nullptr, SYMBOL_LED_WIDTH, nullptr, minWeight, weightLambda2, startTime + delayTime, endTime);
+        BaseEffect *effect2 = new BaseEffect(color, nullptr, sDeg2, nullptr, SYMBOL_LED_WIDTH, nullptr, minWeight, weightLambda2, startTime + delayTime, endTime, true);
         effects.push_back(effect2);
         Serial.print("Trk HALF ");
-        int rnd = 15 + rand() % 30;
+        int rnd = 15 + rand() % 85;
 
         int trickleWeight = (maxWeight / rnd) + 64;
         int trickleWidth = 2;

@@ -88,7 +88,7 @@ void Renderer::Render(const std::vector<BaseEffect *> &effects)
 
     for (BaseEffect *e : effects)
     {
-        if (e->isRunning)
+        if (e->isRunning() || e->isFullRenderTime)
         {
             double halfWidth = e->_width / 2.0;
             double minDeg = e->_deg - halfWidth;

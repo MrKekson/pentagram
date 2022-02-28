@@ -19,17 +19,20 @@ private:
     Renderer _rndr;
 
 public:
-    Animation *animationCurrent;
+    // Animation *animationCurrent;
     AnimationHandler();
     ~AnimationHandler();
     void Setup();
-    void Loop(int64_t now);
+    void Loop();
 
-    void ProcessAnimation();
+    void CreateAnimation(SData prevData);
 
     CHSV baseColor, effectColor;
     std::vector<SData> symbolData;
-    std::vector<std::pair<SData, SData>> CreateRandomSymbolPairs();
+
+    std::vector<BaseEffect *> baseEffects;
+    std::vector<Animation *> animations;
+    // std::pair<SData, SData> CreateNextSData(SData &prev);
 };
 
 AnimationHandler::AnimationHandler()
@@ -38,93 +41,96 @@ AnimationHandler::AnimationHandler()
 
 AnimationHandler::~AnimationHandler()
 {
-    delete animationCurrent;
+    for (Animation *a : animations)
+    {
+        delete a;
+    }
 }
 
-void AnimationHandler::Loop(int64_t now)
+void AnimationHandler::Loop()
 {
+    int64_t now = esp_timer_get_time();
     // Serial.print(":loooooooooooooooooooooooooooooooooop");
     //_loopCount++;
-    animationCurrent->Update(now);
-    if (!animationCurrent->isFinished)
+    bool isAnyRendered = false;
+
+    std::vector<BaseEffect *> runningEffects;
+    runningEffects.insert(runningEffects.end(), baseEffects.begin(), baseEffects.end());
+
+    // for (Animation *a : animations)
+    for (int i = animations.size() - 1; i >= 0; i--)
     {
-        _rndr.Render(animationCurrent->effects);
+        Animation *a = animations[i];
+
+        a->Update();
+
+        runningEffects.insert(runningEffects.end(), a->effects.begin(), a->effects.end());
+
+        if (a->isFinished)
+        {
+            Serial.print("smash\n");
+            SData temp = a->data;
+            delete a;
+            animations.erase(animations.begin() + i);
+            CreateAnimation(temp);
+        }
+        else
+        {
+        }
     }
 
-    if (animationCurrent->isFinished)
-    {
-        delete animationCurrent;
-        ProcessAnimation();
-    }
+    _rndr.Render(runningEffects);
 
     // Serial.print("----------------------------------");
 
     // Serial.print("********************\n");
 }
 
-std::vector<std::pair<SData, SData>> AnimationHandler::CreateRandomSymbolPairs() // make configurable
+SData CreateNextSData(SData prev) // make configurable and range based eg colour +- range etc
 {
-    std::vector<std::pair<SData, SData>> retVect;
-    for (SData &symbol : symbolData)
-    {
-        SData symbol2 = symbol;
+    SData symbolNew = prev;
 
-        symbol2.symbol = rand() % 12;
+    symbolNew.symbol = rand() % 12;
 
-        retVect.push_back(std::make_pair(symbol, symbol2));
-        symbol = symbol2;
-    }
-    return retVect;
+    return symbolNew;
 }
 
-void AnimationHandler::ProcessAnimation()
+void AnimationHandler::CreateAnimation(SData prevData)
 {
-    int ePlay = 1; // rand() % 2; // shoulb be weighed chnage chooser, then weighted effect chances
+    int ePlay = rand() % 5; // shoulb be weighed chnage chooser, then weighted effect chances
 
-    int animEndTime = (3 + rand() % 7) * SEC_TO_MICRO; // should be diff for chnage and hold
+    int animEndTime = (3 + rand() % 2) * SEC_TO_MICRO; // should be diff for chnage and hold
 
-    animationCurrent = new Animation();
     std::vector<BaseEffect *> effects;
 
-    switch (ePlay)
+    SData newData;
+    Serial.print("sdata\n");
+    // for (SData s : symbolData)
     {
-    case 0:
-        effects = LightAndHold(symbolData, 0, animEndTime);
+        switch (ePlay)
+        {
+        case 0 ... 2:
+            newData = prevData;
+            effects = LightAndHold(prevData, prevData, 0, animEndTime);
 
-        break;
-    case 1:
-        effects = Trickle(CreateRandomSymbolPairs(), 0, animEndTime);
-        break;
-    default:
-        break;
+            break;
+        case 3 ... 4:
+            newData = CreateNextSData(prevData);
+            effects = Trickle(prevData, newData, 0, animEndTime);
+            break;
+        default:
+            break;
+        }
     }
 
     // Add background effect once here
-    BaseEffect *backgroundEffect = new BaseEffect(baseColor, nullptr, 0, nullptr, 360, nullptr, 48, nullptr, 0, animEndTime);
-    effects.push_back(backgroundEffect);
+
+    Serial.print("newanim\n");
+
+    Animation *animationCurrent = new Animation(newData);
 
     animationCurrent->Setup(effects);
-
-    // Serial.print(_loopCount);
-    // Serial.print(":loop Creating Anim --- ");
-    // animationCurrent = new Animation();
-
-    // Serial.print("Creating Effect ----");
-
-    // _setupCount++;
-    // Serial.print("Setup Count ----");
-    // Serial.print(_setupCount);
-    // Serial.print("\n");
-
-    // std::vector<BaseEffect *> effects = Trickle(vect symol);
-    // Serial.print(effects.size());
-    // Serial.print("Adding Effect ");
-    // size_t bytes = sizeof(BaseEffect) * effects.size();
-    // Serial.print(" B ESize: ");
-    // Serial.print(bytes);
-
-    // animationCurrent->Setup(effects);
-    // Serial.print("   DONE \n");
+    animations.push_back(animationCurrent);
 }
 
 void AnimationHandler::Setup()
@@ -132,10 +138,15 @@ void AnimationHandler::Setup()
     baseColor = CHSV(160, 64, 80);
     effectColor = CHSV(180, 192, 192);
 
-    symbolData.push_back(SData(effectColor, 0, 350));
-    symbolData.push_back(SData(effectColor, 11, 300));
-    // symbolData.push_back(SData(CHSV(0, 128, 128), 9, 192));
+    BaseEffect *backgroundEffect = new BaseEffect(baseColor, nullptr, 0, nullptr, 360, nullptr, 48, nullptr, 0, 0);
+    backgroundEffect->isFullRenderTime = true;
+    baseEffects.push_back(backgroundEffect);
+
+    // symbolData.push_back(SData(effectColor, 0, 350));
+    //  symbolData.push_back(SData(effectColor, 11, 300));
+    //   symbolData.push_back(SData(CHSV(0, 128, 128), 9, 192));
 
     _rndr.Setup();
-    ProcessAnimation();
+    CreateAnimation(SData(effectColor, 0, 350));
+    CreateAnimation(SData(effectColor, 6, 350));
 }

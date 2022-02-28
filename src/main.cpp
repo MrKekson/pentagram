@@ -40,7 +40,7 @@ void setup()
 
 void loop()
 {
-  EVERY_N_MILLISECONDS(20)
+  // EVERY_N_MILLISECONDS(50)
   {
     loopCount++;
     // renderer.Render();
@@ -50,7 +50,7 @@ void loop()
     renderTime = (renderTime + rTime + rTime) / 3;
 
     // testAnimation.Update();
-    animHandler.Loop(now);
+    animHandler.Loop();
     int lTime = esp_timer_get_time() - now;
     loopTime = (loopTime + lTime + lTime) / 3;
     // eHandler.effects = &(animHandler.animationCurrent->effects);
