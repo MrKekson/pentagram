@@ -41,11 +41,11 @@ AnimationHandler::AnimationHandler()
 
 AnimationHandler::~AnimationHandler()
 {
-    Serial.print("WHAT THE");
+    // Serial.print("WHAT THE");
     for (Animation *a : animations)
     {
         delete a;
-        Serial.print(" FUCK");
+        // Serial.print(" FUCK");
     }
 }
 
@@ -135,8 +135,8 @@ Animation *AnimationHandler::CreateAnimation(SData prevData, int64_t now)
     std::vector<BaseEffect *> effects;
 
     SData newData;
-    Serial.print("create_sdata ");
-    // for (SData s : symbolData)
+    // Serial.print("create_sdata ");
+    //  for (SData s : symbolData)
     {
         switch (ePlay)
         {
@@ -152,7 +152,7 @@ Animation *AnimationHandler::CreateAnimation(SData prevData, int64_t now)
         }
     }
 
-    Serial.print("newanim\n");
+    // Serial.print("newanim\n");
 
     Animation *animationCurrent = new Animation(newData);
 

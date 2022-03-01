@@ -85,8 +85,8 @@ void Renderer::Render(const std::vector<BaseEffect *> &effects, int64_t now)
     int led_width = 3;
 
     WCData _weightedData[NUM_DEG];
-    Serial.print("e ");
-    Serial.print(effects.size());
+    // Serial.print("e ");
+    // Serial.print(effects.size());
     // Serial.print(" ");
     for (BaseEffect *e : effects)
     {
@@ -129,7 +129,7 @@ void Renderer::Render(const std::vector<BaseEffect *> &effects, int64_t now)
 
         // Serial.print('\n');
     }
-    Serial.print("n");
+    // Serial.print("n");
 
     // Serial.print("\n rendering 360 \n");
     for (int i = 0; i < NUM_DEG; ++i)
@@ -157,7 +157,7 @@ void Renderer::Render(const std::vector<BaseEffect *> &effects, int64_t now)
         }
     }
     // Serial.print(" \n: ");
-    Serial.print("d");
+    // Serial.print("d");
     // Serial.print("rendering leds \n");
 
     for (int i = 0; i < NUM_LEDS; i++)
@@ -194,9 +194,9 @@ void Renderer::Render(const std::vector<BaseEffect *> &effects, int64_t now)
 
         _leds[NUM_LEDS - 1 - i] = CHSV(h, s, v);
     }
-    Serial.print("e");
+    // Serial.print("e");
 
     FastLED.show();
 
-    Serial.print("r");
+    // Serial.print("r");
 }
