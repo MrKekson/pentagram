@@ -10,6 +10,7 @@
 class Animation
 {
 private:
+    bool _isLastFrame = false;
     int64_t _elapsedTime = 0;
     int64_t _startTimeStamp;
     int64_t _longestEffectTime = 0;
@@ -25,8 +26,18 @@ public:
     std::vector<BaseEffect *> effects;
 
     int Start();
-    void Setup(std::vector<BaseEffect *> effects);
-    void Update();
+    void Setup(std::vector<BaseEffect *> effects, int64_t _startTimeStamp);
+    void Update(int64_t now);
+
+    bool isLastFrame()
+    {
+        if (_isLastFrame == true)
+        {
+            _isLastFrame = false;
+            return true;
+        }
+        return false;
+    }
 };
 
 Animation::Animation(SData dta) : data(dta)
@@ -51,11 +62,10 @@ Animation::~Animation()
     // Serial.print("\n");
 }
 
-void Animation::Setup(std::vector<BaseEffect *> P_effects)
+void Animation::Setup(std::vector<BaseEffect *> P_effects, int64_t _startTimeStamp)
 {
     // Serial.print("Anim Setup\n");
 
-    _startTimeStamp = esp_timer_get_time();
     effects = P_effects;
     for (BaseEffect *e : effects)
     {
@@ -68,9 +78,8 @@ void Animation::Setup(std::vector<BaseEffect *> P_effects)
     }
 }
 
-void Animation::Update()
+void Animation::Update(int64_t now)
 {
-    int64_t now = esp_timer_get_time();
     if ((_startTimeStamp + MAX_ANIM_LENGHT) < now || _longestEffectTime <= now) // anim végénél is true kell legyen
     {
         isFinished = true;
@@ -79,8 +88,11 @@ void Animation::Update()
 
     for (BaseEffect *e : effects)
     {
+
+        e->CalcStep(now);
+
         // e->isRunning = false;
-        e->CalcStep();
+
         // e->isRunning = true;
 
         // Serial.print(e->isStarted(now));

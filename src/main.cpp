@@ -18,7 +18,7 @@
 // CRGB leds[NUM__LEDS];
 
 long framecount = 0;
-int renderTime, loopTime, loopCount;
+int renderTime, loopTime, loopCount, totalLoops = 0;
 uint32_t meminfo;
 
 void AdditionalCode();
@@ -40,7 +40,7 @@ void setup()
 
 void loop()
 {
-  // EVERY_N_MILLISECONDS(50)
+  EVERY_N_MILLISECONDS(1000 / FPS)
   {
     loopCount++;
     // renderer.Render();
@@ -58,13 +58,14 @@ void loop()
 
   EVERY_N_MILLISECONDS(1000)
   {
+    Serial.print("\n");
     Serial.print(loopCount);
     Serial.print("FPS -- ");
     Serial.print(renderTime / 1000);
-    Serial.print("Rt -- ");
-    Serial.print(loopTime / 1000);
-    Serial.print("Lt  ");
-    uint32_t memDelta = meminfo - ESP.getFreeHeap();
+    Serial.print(" R ");
+    Serial.print(totalLoops);
+    Serial.print(" :TOTAL ");
+    uint32_t memDelta = (meminfo - ESP.getFreeHeap()) / 1024;
     Serial.print(memDelta);
     Serial.print(" M ");
 
@@ -72,61 +73,62 @@ void loop()
     Serial.print(meminfo);
     Serial.print("\n");
     loopCount = 0;
+    totalLoops++;
     renderTime = 0;
     loopTime = 0;
   }
 }
 
-void AdditionalCode()
-{
-  int64_t t = esp_timer_get_time();
+// void AdditionalCode()
+// {
+//   int64_t t = esp_timer_get_time();
 
-  if (!SPIFFS.begin(true))
-  {
-    Serial.println("An Error has occurred while mounting SPIFFS");
-    return;
-  }
+//   if (!SPIFFS.begin(true))
+//   {
+//     Serial.println("An Error has occurred while mounting SPIFFS");
+//     return;
+//   }
 
-  File file = SPIFFS.open("/test.json");
-  if (!file)
-  {
-    Serial.println("Failed to open file for reading");
-    return;
-  }
+//   File file = SPIFFS.open("/test.json");
+//   if (!file)
+//   {
+//     Serial.println("Failed to open file for reading");
+//     return;
+//   }
 
-  Serial.println("File Content:");
-  size_t fSize = file.size();
+//   Serial.println("File Content:");
+//   size_t fSize = file.size();
 
-  char jsonFileData[fSize] = {'\0'};
+//   char jsonFileData[fSize] = {'\0'};
 
-  u_int i = 0;
+//   u_int i = 0;
 
-  while (file.available())
-  {
-    jsonFileData[i] = file.read();
-    Serial.write(jsonFileData[i]);
-    i++;
-  }
-  jsonFileData[i] = '\0';
+//   while (file.available())
+//   {
+//     jsonFileData[i] = file.read();
+//     Serial.write(jsonFileData[i]);
+//     i++;
+//   }
+//   jsonFileData[i] = '\0';
 
-  file.close();
+//   file.close();
 
-  u_int jsonSize = fSize * 1.04; // ke?
-  DynamicJsonDocument doc(jsonSize);
+//   u_int jsonSize = fSize * 1.04; // ke?
+//   DynamicJsonDocument doc(jsonSize);
 
-  DeserializationError error = deserializeJson(doc, jsonFileData);
+//   DeserializationError error = deserializeJson(doc, jsonFileData);
 
-  if (error)
-  {
-    Serial.print(F("deserializeJson() failed: "));
-    Serial.println(error.f_str());
-    return;
-  }
+//   if (error)
+//   {
+//     Serial.print(F("deserializeJson() failed: "));
+//     Serial.println(error.f_str());
+//     return;
+//   }
 
-  // const char* name = doc["name"];
-  // Serial.println("name:");
-  // Serial.println(name);
-}
+//   // const char* name = doc["name"];
+//   // Serial.println("name:");
+//   // Serial.println(name);
+// }
 
 // void set(CRGB c)
 // {

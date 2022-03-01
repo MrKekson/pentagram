@@ -55,9 +55,8 @@ public:
         endTime = animationCurrentTime + localEndTime;
     }
 
-    bool isRunning()
+    bool isRunning(int64_t now)
     {
-        int64_t now = esp_timer_get_time();
         if (isStarted(now) && !isEnded(now))
         {
             return true;
@@ -65,11 +64,10 @@ public:
         return false;
     }
 
-    void CalcStep()
+    void CalcStep(int64_t now)
     {
-        if (isRunning())
+        if (isRunning(now))
         {
-            int64_t now = esp_timer_get_time();
             int64_t deltaT = now - startTime;
             if (colorChanger != nullptr)
             {
@@ -106,6 +104,7 @@ public:
           _deg(deg),
           _width(w),
           _rWeight(rw),
+          isFullRenderTime(isFRender),
           localStartTime(st),
           localEndTime(et),
           colorChanger(colorChanger),
@@ -113,6 +112,5 @@ public:
           widthChanger(widthChanger),
           weightChanger(weightChanger)
     {
-        isFullRenderTime = isFRender;
     }
 };

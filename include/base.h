@@ -1,5 +1,7 @@
 #pragma once
 
+#define FPS 100
+#define FPS_HACK (1000000 / FPS) * 2
 #define POS_CORRECTION -9
 
 #define NUM_DEG 360
