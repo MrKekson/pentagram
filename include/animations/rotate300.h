@@ -119,8 +119,6 @@ std::vector<BaseEffect *> FadeTo(SData startData, SData endData, int64_t startTi
         int minWeight = 0;
 
         CHSV color = startData.c;
-        int deg = 90;
-        int width = 50; // degree
 
         double sDeg = SymbolToDeg(symbolFrom);
         ValueChanger<int> lambda = createLinearValueChanger(maxWeight, minWeight, halfDuration);

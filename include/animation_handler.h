@@ -91,7 +91,7 @@ void CreateHolder(std::vector<BaseEffect *> &effects, SData prevData)
 {
     int ePlay = rand() % 100; // shoulb be weighed chnage chooser, then weighted effect chances
 
-    int64_t animEndTime = (1 + rand() % 5) * SEC_TO_MICRO; // should be diff for chnage and hold
+    int64_t animEndTime = (2 + rand() % 5) * SEC_TO_MICRO; // must be at least 2 or it can get jumpy
 
     SData newData = prevData;
     newData.weight = 30;
