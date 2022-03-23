@@ -1,21 +1,15 @@
 #include <Arduino.h>
 #include <FastLED.h>
-#include <ArduinoJson.h>
 
-#include "SPIFFS.h"
-
-// #include <WiFi.h>
-// #include <WiFiClient.h>
-// #include <WiFiAP.h>
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <WiFiAP.h>
 
 #include "renderer.h"
 #include "animation_handler.h"
+#include "json_handler.h"
 
 #define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000 / x)
-//#define ARRAYLENGTH(x) (sizeof(x) / sizeof(x[0]))
-
-// CHSV hsv_leds[NUM__LEDS];
-// CRGB leds[NUM__LEDS];
 
 long framecount = 0;
 int renderTime, loopTime, loopCount, totalLoops = 0;
@@ -26,16 +20,18 @@ void AdditionalCode();
 // EffectHandler eHandler = EffectHandler(renderer);
 
 AnimationHandler animHandler = AnimationHandler();
+Renderer renderer = Renderer();
+JsonHandler jsonHandler = JsonHandler();
 
 void setup()
 {
   Serial.begin(115200);
 
-  // AdditionalCode();
+  ParsedEffectData eData = jsonHandler.Read();
 
-  animHandler.Setup();
-  //  testAnimation.Setup();
-  //  eHandler.effects = &(animHandler.animationCurrent->effects);
+  renderer.Setup();
+  renderer.SetBrightness(eData.brightness);
+  animHandler.Setup(&renderer, &eData);
 }
 
 void loop()
@@ -50,6 +46,7 @@ void loop()
     renderTime = (renderTime + rTime + rTime) / 3;
 
     // testAnimation.Update();
+    // Serial.print("\nFUKU\n");
     animHandler.Loop();
     int lTime = esp_timer_get_time() - now;
     loopTime = (loopTime + lTime + lTime) / 3;

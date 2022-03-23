@@ -9,20 +9,20 @@
 #include "debug.h"
 #include "base.h"
 #include "animation.h"
-#include "animations/rotate300.h"
+#include "animation_elements.h"
 
 class AnimationHandler
 {
 private:
     u_int _loopCount = 0;
     u_int _setupCount = 0;
-    Renderer _rndr;
+    Renderer *_rndr;
 
 public:
     // Animation *animationCurrent;
     AnimationHandler();
     ~AnimationHandler();
-    void Setup();
+    void Setup(Renderer *rndr, ParsedEffectData *eData);
     void Loop();
 
     Animation *CreateAnimation(SData prevData, int64_t now);
@@ -53,6 +53,10 @@ void AnimationHandler::Loop()
 {
     int64_t now = esp_timer_get_time();
 
+    // Serial.print('NOW: ');
+    // Serial.print(now);
+    // Serial.print(' ');
+
     std::vector<BaseEffect *> runningEffects;
     runningEffects.insert(runningEffects.end(), baseEffects.begin(), baseEffects.end());
 
@@ -63,7 +67,11 @@ void AnimationHandler::Loop()
         a->Update(now);
         if (a->isFinished)
         {
-            Serial.print("\nsmash ");
+            // Serial.print("wtf:  ");
+            // Serial.print(animations.size());
+            // Serial.print(" smash ");
+            // Serial.print(i);
+            // Serial.print("; ");
             SData temp = a->data;
             delete a;
             animations[i] = CreateAnimation(temp, now); // eraSE(BEGIN, REMOVE(BEGIN,END))v.erase(std::remove_if(v.begin(), v.end(), IsOdd), v.end());
@@ -72,7 +80,7 @@ void AnimationHandler::Loop()
         runningEffects.insert(runningEffects.end(), animations[i]->effects.begin(), animations[i]->effects.end());
     }
 
-    _rndr.Render(runningEffects, now);
+    _rndr->Render(runningEffects, now);
 }
 
 SData CreateNextSData(SData prev) // make configurable and range based eg colour +- range etc
@@ -91,7 +99,7 @@ void CreateHolder(std::vector<BaseEffect *> &effects, SData prevData)
 {
     int ePlay = rand() % 100; // shoulb be weighed chnage chooser, then weighted effect chances
 
-    int64_t animEndTime = (2 + rand() % 5) * SEC_TO_MICRO; // must be at least 2 or it can get jumpy
+    int64_t animEndTime = (rand() % 10 + 2) * SEC_TO_MICRO; // must be at least 2 or it can get jumpy
 
     SData newData = prevData;
     newData.weight = 30;
@@ -99,7 +107,7 @@ void CreateHolder(std::vector<BaseEffect *> &effects, SData prevData)
     switch (ePlay)
     {
     case 0 ... 49:
-        effects = LightAndHold(prevData, prevData, 0, animEndTime, 1);
+        effects = LightAndHold(prevData, prevData, 0, animEndTime);
         break;
     default:
         effects = LightAndHold(prevData, newData, 0, animEndTime);
@@ -109,72 +117,75 @@ void CreateHolder(std::vector<BaseEffect *> &effects, SData prevData)
 
 void CreateChanger(std::vector<BaseEffect *> &effects, SData prevData, SData nextData)
 {
-    int ePlay = rand() % 100; // shoulb be weighed chnage chooser, then weighted effect chances
+    int ePlay = rand() % 100 + 1; // shoulb be weighed chnage chooser, then weighted effect chances
 
-    int64_t animEndTime = (3 + rand() % 7) * SEC_TO_MICRO; // should be diff for chnage and hold
+    int64_t animEndTime = (rand() % 7 + 3) * SEC_TO_MICRO; // should be diff for chnage and hold
+    // int64_t animEndTime = (3) * SEC_TO_MICRO; // should be diff for chnage and hold
 
+    // achance BCHANCE
     switch (ePlay)
     {
-    case 0 ... 19:
+        // 1..ACHANCE
+
+    case 1 ... 20:
         effects = Trickle(prevData, nextData, 0, animEndTime);
         break;
-    case 20 ... 49:
+        // ACHANCE .. ACHANCE+BCHANCE
+    case 21 ... 50:
         effects = RotateTo(prevData, nextData, 0, animEndTime);
         break;
-
+        // ACHANCE .. ACHANCE+BCHANCE
     default:
         effects = FadeTo(prevData, nextData, 0, animEndTime);
         break;
     }
+    // Serial.print(" DONE");
 }
 
 Animation *AnimationHandler::CreateAnimation(SData prevData, int64_t now)
 {
-    int ePlay = rand() % 10; // shoulb be weighed chnage chooser, then weighted effect chances
+    int ePlay = rand() % 10 + 1; // shoulb be weighed chnage chooser, then weighted effect chances
 
     std::vector<BaseEffect *> effects;
 
     SData newData;
-    // Serial.print("create_sdata ");
-    //  for (SData s : symbolData)
+
+    switch (ePlay)
     {
-        switch (ePlay)
-        {
-        case 0 ... 1:
-            newData = CreateNextSData(prevData);
-            CreateChanger(effects, prevData, newData);
-            break;
+    case 1 ... 3:
+        newData = CreateNextSData(prevData);
+        CreateChanger(effects, prevData, newData);
+        break;
 
-        default:
-            newData = prevData;
-            CreateHolder(effects, prevData);
-            break;
-        }
+    default:
+        newData = prevData;
+        CreateHolder(effects, prevData);
+        break;
     }
-
-    // Serial.print("newanim\n");
 
     Animation *animationCurrent = new Animation(newData);
 
     animationCurrent->Setup(effects, now);
     return animationCurrent;
-    // animationCurrent->Update(now);
-    // animations.push_back(animationCurrent);
 }
 
-void AnimationHandler::Setup()
+void AnimationHandler::Setup(Renderer *rndr, ParsedEffectData *eData)
 {
     int64_t now = esp_timer_get_time();
-    baseColor = CHSV(180, 64, 80);
-    CHSV effectColor = CHSV(180, 192, 192);
+
+    _rndr = rndr;
+
+    baseColor = eData->baseColor;
+
+    // CHSV effectColor = CHSV(180, 192, 192);
     CHSV effectColor2 = CHSV(140, 192, 192);
-    CHSV effectColor3 = CHSV(120, 192, 192);
+    // CHSV effectColor3 = CHSV(120, 192, 192);
 
     BaseEffect *backgroundEffect = new BaseEffect(baseColor, nullptr, 0, nullptr, 360, nullptr, 48, nullptr, 0, 0);
     backgroundEffect->isFullRenderTime = true;
     baseEffects.push_back(backgroundEffect);
 
-    _rndr.Setup();
+    //_rndr.Setup();
     animations.push_back(CreateAnimation(SData(effectColor2, 0, 350), now));
     animations.push_back(CreateAnimation(SData(effectColor2, 4, 350), now));
     animations.push_back(CreateAnimation(SData(effectColor2, 8, 350), now));

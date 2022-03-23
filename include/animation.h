@@ -10,7 +10,6 @@
 class Animation
 {
 private:
-    bool _isLastFrame = false;
     int64_t _elapsedTime = 0;
     int64_t _startTimeStamp;
     int64_t _longestEffectTime = 0;
@@ -28,16 +27,6 @@ public:
     int Start();
     void Setup(std::vector<BaseEffect *> effects, int64_t _startTimeStamp);
     void Update(int64_t now);
-
-    bool isLastFrame()
-    {
-        if (_isLastFrame == true)
-        {
-            _isLastFrame = false;
-            return true;
-        }
-        return false;
-    }
 };
 
 Animation::Animation(SData dta) : data(dta)
@@ -46,36 +35,32 @@ Animation::Animation(SData dta) : data(dta)
 
 Animation::~Animation()
 {
-
-    // Serial.print("Anim Death\n");
-    // Serial.print("------- BD FREEHEAP:");
-    // Serial.print(ESP.getFreeHeap());
-
     for (BaseEffect *e : effects)
     {
-        // Serial.print('e');
         delete e;
-    }
-
-    // Serial.print("\n ------ AD FREEHEAP:");
-    // Serial.print(ESP.getFreeHeap());
-    // Serial.print("\n");
+    };
 }
 
-void Animation::Setup(std::vector<BaseEffect *> P_effects, int64_t _startTimeStamp)
+void Animation::Setup(std::vector<BaseEffect *> P_effects, int64_t now)
 {
     // Serial.print("Anim Setup\n");
-
+    _startTimeStamp = now;
     effects = P_effects;
     for (BaseEffect *e : effects)
     {
-        e->setAnimationStartTime(_startTimeStamp);
+        e->setAnimationStartTime(now);
 
         if (e->endTime > 0 && e->endTime > _longestEffectTime)
         {
             _longestEffectTime = e->endTime;
         }
     }
+    // Serial.print(" TIMES: ");
+    // Serial.print(now);
+
+    // Serial.print(" : ");
+    // Serial.print(_longestEffectTime);
+    // Serial.print("_");
 }
 
 void Animation::Update(int64_t now)
@@ -88,16 +73,6 @@ void Animation::Update(int64_t now)
 
     for (BaseEffect *e : effects)
     {
-
         e->CalcStep(now);
-
-        // e->isRunning = false;
-
-        // e->isRunning = true;
-
-        // Serial.print(e->isStarted(now));
-        // Serial.print(!e->isEnded(now));
-        // Serial.print(e->isRunning);
-        // Serial.print("\n");
     }
 }

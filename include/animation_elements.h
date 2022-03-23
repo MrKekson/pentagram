@@ -149,8 +149,6 @@ std::vector<BaseEffect *> Trickle(SData startData, SData endData, int64_t startT
         int minWeight = 0;
 
         CHSV color = startData.c;
-        int deg = 90;
-        int width = 50; // degree
 
         double sDeg = SymbolToDeg(symbolFrom);
         ValueChanger<int> weightLambda = createLinearValueChanger(maxWeight, minWeight, duration - delayTime);
@@ -214,6 +212,9 @@ std::vector<BaseEffect *> RotateTo(SData startData, SData endData, int64_t start
         int symbolTo = endData.symbol;
 
         int64_t duration = endTime - startTime;
+
+        Serial.print(" t: ");
+        Serial.print(duration);
 
         double sDeg = SymbolToDeg(symbolFrom);
         double sDeg2 = SymbolToDeg(symbolTo);

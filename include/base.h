@@ -1,6 +1,7 @@
 #pragma once
 
-#define FPS 100
+// smidróczki andrea
+#define FPS 80
 #define FPS_HACK (1000000 / FPS) * 2
 #define POS_CORRECTION -9
 
@@ -10,7 +11,7 @@
 
 #define OUTPUT_PIN 27
 
-#define DEFAULT_BRIGHTNESS 92
+#define DEFAULT_BRIGHTNESS 90
 
 #define SYMBOL_LED_WIDTH 26
 #define SYMBOL_WIDTH 30
@@ -22,6 +23,22 @@
 #define SEC_TO_MICRO 1000000
 
 #define MAX_ANIM_LENGHT (5 * 60 * SEC_TO_MICRO)
+
+struct ParsedEffectData
+{
+    ParsedEffectData()
+    {
+        baseColor = CHSV(180, 180, 64);
+        brightness = DEFAULT_BRIGHTNESS;
+    }
+    ParsedEffectData(int b, CHSV baseC)
+    {
+        baseColor = baseC;
+        brightness = b;
+    }
+    CHSV baseColor;
+    int brightness;
+};
 
 struct SData
 {
@@ -59,19 +76,6 @@ int Clamp(int degNum, int clamp = NUM_DEG) // cyrcle clamp
     }
 }
 
-double Clamp(double degNum, double clamp = NUM_DEG) // cyrcle clamp
-{
-    if (degNum >= 0)
-    {
-        return fmod(degNum, NUM_DEG);
-    }
-
-    if (degNum < 0)
-    {
-        return NUM_DEG - fmod(fabs(degNum), NUM_DEG);
-    }
-}
-
 double SymbolToDeg(int numba)
 {
     if (numba < 0 || numba > 11)
@@ -88,3 +92,16 @@ int DegToSymbol(double numba)
     double pos = int((numba - SYMBOL_OFFSET) / SYMBOL_WIDTH);
     return pos;
 }
+
+// double Clamp(double degNum, double clamp = NUM_DEG) // cyrcle clamp
+//  {
+//      if (degNum >= 0)
+//      {
+//          return fmod(degNum, NUM_DEG);
+//      }
+
+//     if (degNum < 0)
+//     {
+//         return NUM_DEG - fmod(fabs(degNum), NUM_DEG);
+//     }
+// }

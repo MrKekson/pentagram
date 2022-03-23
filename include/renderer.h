@@ -59,6 +59,7 @@ public:
     ~Renderer();
     void Render(const std::vector<BaseEffect *> &effects, int64_t now);
     void Setup();
+    void SetBrightness(int b);
 };
 
 Renderer::Renderer()
@@ -69,15 +70,27 @@ Renderer::~Renderer()
 {
 }
 
+void Renderer::SetBrightness(int b)
+{
+    if (b >= 0 && b <= 255)
+    {
+        brightness = b;
+    }
+}
+
 void Renderer::Setup()
 {
     FastLED.addLeds<NEOPIXEL, OUTPUT_PIN>(_leds, NUM_LEDS);
     FastLED.setBrightness(brightness);
     FastLED.clear();
 
-    fill_solid(_leds, NUM_LEDS, CRGB(96, 0, 0));
-    FastLED.show();
-    delay(200);
+    for (size_t i = 0; i < 255; i++)
+    {
+        int col = Clamp(i + 180, 255);
+        fill_solid(_leds, NUM_LEDS, CRGB(CHSV(col, 128, 128)));
+        FastLED.show();
+        delay(5);
+    }
 }
 
 void Renderer::Render(const std::vector<BaseEffect *> &effects, int64_t now)
@@ -196,6 +209,7 @@ void Renderer::Render(const std::vector<BaseEffect *> &effects, int64_t now)
     }
     // Serial.print("e");
 
+    FastLED.setBrightness(brightness);
     FastLED.show();
 
     // Serial.print("r");

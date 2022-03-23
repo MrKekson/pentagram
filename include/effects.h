@@ -48,11 +48,11 @@ public:
     DoubleValueChanger widthChanger;
     IntValueChanger weightChanger;
 
-    void setAnimationStartTime(int64_t animationCurrentTime)
+    void setAnimationStartTime(int64_t now)
     {
-        animationStartTime = animationCurrentTime;
-        startTime = animationCurrentTime + localStartTime;
-        endTime = animationCurrentTime + localEndTime;
+        animationStartTime = now;
+        startTime = now + localStartTime;
+        endTime = now + localEndTime;
     }
 
     bool isRunning(int64_t now)

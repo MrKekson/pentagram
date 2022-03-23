@@ -1,0 +1,31 @@
+{
+    "brightness": 90,
+    "baseColor": {
+        "h": 140,
+        "s": 160,
+        "v": 96
+    },
+    "effects": [
+        {
+            "effectColor": {
+                "h": 180,
+                "s": 160,
+                "v": 160
+            }
+        },
+        {
+            "effectColor": {
+                "h": 140,
+                "s": 160,
+                "v": 160
+            }
+        },
+        {
+            "effectColor": {
+                "h": 80,
+                "s": 160,
+                "v": 160
+            }
+        }
+    ]
+}
