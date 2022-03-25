@@ -2,14 +2,14 @@
 
 #include <FastLED.h>
 #include <limits.h>
-#include "base.h"
-#include "debug.h"
+//#include "base.h"
 
 template <class T>
-using ValueChanger = std::function<T(T, int64_t)>;
+using anyádValueChanger = std::function<T(T, int64_t)>;
 
 using DoubleValueChanger = std::function<double(double, int64_t)>;
 using ColorValueChanger = std::function<CHSV(CHSV, int64_t)>;
+// using ColorValueChanger = std::function<DCHSV(DCHSV, int64_t)>;
 using IntValueChanger = std::function<int(int, int64_t)>;
 // typedef double (*TwoValueChanger)(double, int64_t);
 
