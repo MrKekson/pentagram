@@ -5,7 +5,7 @@
 //#include "base.h"
 
 template <class T>
-using anyádValueChanger = std::function<T(T, int64_t)>;
+using ValueChanger = std::function<T(T, int64_t)>;
 
 using DoubleValueChanger = std::function<double(double, int64_t)>;
 using ColorValueChanger = std::function<CHSV(CHSV, int64_t)>;

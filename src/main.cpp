@@ -5,9 +5,10 @@
 //#include <WiFiClient.h>
 //#include <WiFiAP.h>
 
+#include "json_handler.h"
 #include "renderer.h"
 #include "animation_handler.h"
-#include "json_handler.h"
+
 
 #define TIMES_PER_SECOND(x) EVERY_N_MILLISECONDS(1000 / x)
 
