@@ -1,9 +1,9 @@
 #include <Arduino.h>
 #include <FastLED.h>
 
-#include <WiFi.h>
-#include <WiFiClient.h>
-#include <WiFiAP.h>
+//#include <WiFi.h>
+//#include <WiFiClient.h>
+//#include <WiFiAP.h>
 
 #include "renderer.h"
 #include "animation_handler.h"
@@ -15,7 +15,17 @@ long framecount = 0;
 int renderTime, loopTime, loopCount, totalLoops = 0;
 uint32_t meminfo;
 
-void AdditionalCode();
+// Load Wi-Fi library
+
+// Replace with your network credentials
+const char *ssid = "ESP32-Access-Point";
+const char *password = "123456789";
+
+// Set web server port number to 80
+// WiFiServer server(80);
+
+// Variable to store the HTTP request
+String header;
 
 // EffectHandler eHandler = EffectHandler(renderer);
 
@@ -26,6 +36,9 @@ JsonHandler jsonHandler = JsonHandler();
 void setup()
 {
   Serial.begin(115200);
+
+  // WiFi.mode(WIFI_STA);
+  // WiFi.disconnect();
 
   ParsedEffectData eData = jsonHandler.Read();
 

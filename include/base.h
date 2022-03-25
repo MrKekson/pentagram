@@ -63,6 +63,26 @@ struct SData
     CHSV c;
 };
 
+// struct DCHSV
+// {
+//     double H;
+//     double S;
+//     double V;
+//     DCHSV()
+//     {
+//         H = 0;
+//         S = 92;
+//         V = 92;
+//     }
+//     DCHSV(double h, double s, double v) : H(h), S(s), V(v) {}
+
+//     // implicit conversion
+//     operator CHSV() const { return CHSV(H, S, V); }
+
+//     // explicit conversion
+//     // explicit operator int *() const { return nullptr; }
+// };
+//
 int Clamp(int degNum, int clamp = NUM_DEG) // cyrcle clamp
 {
     if (degNum >= 0)

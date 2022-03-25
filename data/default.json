@@ -7,6 +7,22 @@
     },
     "effects": [
         {
+            "changerChance": 4,
+            "changerTime": 7,
+            "holderChance": 5,
+            "holderTime": 3,
+            "list": [
+                {
+                    "elementType": 1, // elementType: 1 => Changer
+                    "ratio": 20,
+                    "effectType": 1 // FadeTo
+                },
+                {
+                    "elementType": 1, // elementType: 2 => Holder
+                    "ratio": 20,
+                    "effectType": 1 // LightAndHold
+                }
+            ],
             "effectColor": {
                 "h": 180,
                 "s": 160,
