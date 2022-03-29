@@ -60,6 +60,7 @@ public:
     void Render(const std::vector<BaseEffect *> &effects, int64_t now);
     void Setup();
     void SetBrightness(int b);
+    void SetColor(CHSV c);
 };
 
 Renderer::Renderer()
@@ -76,6 +77,12 @@ void Renderer::SetBrightness(int b)
     {
         brightness = b;
     }
+}
+
+void Renderer::SetColor(CHSV c)
+{
+    fill_solid(_leds, NUM_LEDS, CRGB(c));
+    FastLED.show();
 }
 
 void Renderer::Setup()
@@ -130,9 +137,9 @@ void Renderer::Render(const std::vector<BaseEffect *> &effects, int64_t now)
             {
                 int j = Clamp(i);
 
-                _weightedData[j].h += e->_c.h * e->_rWeight;
-                _weightedData[j].s += e->_c.s * e->_rWeight;
-                _weightedData[j].v += e->_c.v * e->_rWeight;
+                _weightedData[j].h += e->_c.H * e->_rWeight;
+                _weightedData[j].s += e->_c.S * e->_rWeight;
+                _weightedData[j].v += e->_c.V * e->_rWeight;
                 _weightedData[j].currentWeight += e->_rWeight;
 
                 // Serial.print(' ');

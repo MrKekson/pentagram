@@ -8,8 +8,7 @@ template <class T>
 using ValueChanger = std::function<T(T, int64_t)>;
 
 using DoubleValueChanger = std::function<double(double, int64_t)>;
-using ColorValueChanger = std::function<CHSV(CHSV, int64_t)>;
-// using ColorValueChanger = std::function<DCHSV(DCHSV, int64_t)>;
+using ColorValueChanger = std::function<DCHSV(DCHSV, int64_t)>;
 using IntValueChanger = std::function<int(int, int64_t)>;
 // typedef double (*TwoValueChanger)(double, int64_t);
 
@@ -27,7 +26,7 @@ protected:
     }
 
 public:
-    CHSV _c;
+    DCHSV _c;
     double _deg;
     double _width;
     int _rWeight;
@@ -89,7 +88,7 @@ public:
     }
 
     BaseEffect(
-        CHSV c,
+        DCHSV c,
         ColorValueChanger colorChanger,
         double deg,
         DoubleValueChanger degChanger,

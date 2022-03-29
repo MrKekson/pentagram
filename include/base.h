@@ -1,6 +1,5 @@
 #pragma once
 
-// smidróczki andrea
 #define FPS 80
 #define FPS_HACK (1000000 / FPS) * 2
 #define POS_CORRECTION -9
@@ -40,6 +39,46 @@ struct ParsedEffectData
     int brightness;
 };
 
+struct DCHSV
+{
+    double H;
+    double S;
+    double V;
+    // double deltaH;
+    // double deltaS;
+    // double deltaV;
+
+    DCHSV()
+    {
+        H = 0;
+        S = 92;
+        V = 92;
+    }
+    DCHSV(double h, double s, double v) : H(h), S(s), V(v) {}
+    DCHSV(CHSV c) : H(c.h), S(c.s), V(c.v) {}
+
+    // implicit conversion
+    operator CHSV() const { return CHSV(H, S, V); }
+
+    // explicit conversion
+    // explicit operator int *() const { return nullptr; }
+};
+
+struct ColorDelta
+{
+    double H;
+    double S;
+    double V;
+    double deltaH;
+    double deltaS;
+    double deltaV;
+    int chance; // x/100000
+    int64_t minTime, maxTime;
+
+    ColorDelta(double h, double s, double v, double dH, double dS, double dV, int chn, int64_t miT, int64_t mxT) : H(h), S(s), V(v), deltaH(dH), deltaS(dS), deltaV(dV), chance(chn), minTime(miT), maxTime(mxT) {}
+    ColorDelta(DCHSV c, double dH = 0, double dS = 0, double dV = 0, int chn = 0, int64_t miT = 0, int64_t mxT = 0) : H(c.H), S(c.S), V(c.V), deltaH(dH), deltaS(dS), deltaV(dV), chance(chn), minTime(miT), maxTime(mxT) {}
+};
+
 struct SData
 {
     SData()
@@ -47,42 +86,22 @@ struct SData
         shape = 0;
         symbol = 0;
         weight = 0;
-        c = CHSV(0, 0, 0);
+        c = DCHSV(0, 0, 0);
     }
-    SData(CHSV col, int _symbol, int _weight = 128, int _shape = 0)
+    SData(DCHSV col, int _symbol, int _weight = 128, int _shape = 0)
     {
         shape = _shape;
         symbol = _symbol;
         weight = _weight;
-        c = CHSV(col);
+        c = col;
     }
 
     int shape;
     int symbol;
     int weight;
-    CHSV c;
+    DCHSV c;
 };
 
-// struct DCHSV
-// {
-//     double H;
-//     double S;
-//     double V;
-//     DCHSV()
-//     {
-//         H = 0;
-//         S = 92;
-//         V = 92;
-//     }
-//     DCHSV(double h, double s, double v) : H(h), S(s), V(v) {}
-
-//     // implicit conversion
-//     operator CHSV() const { return CHSV(H, S, V); }
-
-//     // explicit conversion
-//     // explicit operator int *() const { return nullptr; }
-// };
-//
 int Clamp(int degNum, int clamp = NUM_DEG) // cyrcle clamp
 {
     if (degNum >= 0)

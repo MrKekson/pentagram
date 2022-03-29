@@ -25,7 +25,10 @@ public:
     void Setup(Renderer *rndr, ParsedEffectData *eData);
     void Loop();
 
-    Animation *CreateAnimation(SData prevData, int64_t now);
+    // DCHSV GetColourTransitionEndpoint(DCHSV colorTo, int64_t now, int64_t end);
+    // void SetBaseColor(DCHSV c);
+
+    Animation *CreateAnimation(SData prevData, ColorDelta delta, int64_t now);
 
     CHSV baseColor;
     std::vector<SData> symbolData;
@@ -73,8 +76,9 @@ void AnimationHandler::Loop()
             // Serial.print(i);
             // Serial.print("; ");
             SData temp = a->data;
+            ColorDelta tempBaseCol = a->baseColor;
             delete a;
-            animations[i] = CreateAnimation(temp, now); // eraSE(BEGIN, REMOVE(BEGIN,END))v.erase(std::remove_if(v.begin(), v.end(), IsOdd), v.end());
+            animations[i] = CreateAnimation(temp, tempBaseCol, now); // eraSE(BEGIN, REMOVE(BEGIN,END))v.erase(std::remove_if(v.begin(), v.end(), IsOdd), v.end());
         }
 
         runningEffects.insert(runningEffects.end(), animations[i]->effects.begin(), animations[i]->effects.end());
@@ -83,21 +87,36 @@ void AnimationHandler::Loop()
     _rndr->Render(runningEffects, now);
 }
 
-SData CreateNextSData(SData prev) // make configurable and range based eg colour +- range etc
+SData CreateNextSData(SData prev, ColorDelta baseCol) // make configurable and range based eg colour +- range etc
 {
     SData symbolNew = prev;
+
+    int rnd = esp_random() % 100;
+
+    double hStep = ((baseCol.deltaH * 2) / 99 * rnd) - baseCol.deltaH;
+
+    double h, s, v;
+    double dH = baseCol.deltaH * 2;
+    if (1)
+    {
+        h = Clamp(baseCol.H + hStep); // * () + 1 - baseCol.deltaH, 255);
+        // s = Clamp(baseCol.S + esp_random() % 255 + 1 - 128, 255);
+        // v = Clamp(baseCol.V + esp_random() % 255 + 1 - 128, 255);
+    }
+
+    symbolNew.c.H = h;
 
     // Serial.print(prev.symbol);
     // Serial.print(" :sym ");
 
-    symbolNew.symbol = rand() % 12;
+    symbolNew.symbol = esp_random() % 12;
 
     return symbolNew;
 }
 
 void CreateHolder(std::vector<BaseEffect *> &effects, SData prevData)
 {
-    int ePlay = rand() % 100; // shoulb be weighed chnage chooser, then weighted effect chances
+    int ePlay = esp_random() % 100; // shoulb be weighed chnage chooser, then weighted effect chances
 
     int64_t animEndTime = (rand() % 10 + 2) * SEC_TO_MICRO; // must be at least 2 or it can get jumpy
 
@@ -117,7 +136,7 @@ void CreateHolder(std::vector<BaseEffect *> &effects, SData prevData)
 
 void CreateChanger(std::vector<BaseEffect *> &effects, SData prevData, SData nextData)
 {
-    int ePlay = rand() % 100 + 1; // shoulb be weighed chnage chooser, then weighted effect chances
+    int ePlay = esp_random() % 100 + 1; // shoulb be weighed chnage chooser, then weighted effect chances
 
     int64_t animEndTime = (rand() % 7 + 3) * SEC_TO_MICRO; // should be diff for chnage and hold
     // int64_t animEndTime = (3) * SEC_TO_MICRO; // should be diff for chnage and hold
@@ -142,9 +161,9 @@ void CreateChanger(std::vector<BaseEffect *> &effects, SData prevData, SData nex
     // Serial.print(" DONE");
 }
 
-Animation *AnimationHandler::CreateAnimation(SData prevData, int64_t now)
+Animation *AnimationHandler::CreateAnimation(SData prevData, ColorDelta baseColor, int64_t now)
 {
-    int ePlay = rand() % 10 + 1; // shoulb be weighed chnage chooser, then weighted effect chances
+    int ePlay = esp_random() % 10 + 1; // shoulb be weighed chnage chooser, then weighted effect chances
 
     std::vector<BaseEffect *> effects;
 
@@ -153,7 +172,7 @@ Animation *AnimationHandler::CreateAnimation(SData prevData, int64_t now)
     switch (ePlay)
     {
     case 1 ... 3:
-        newData = CreateNextSData(prevData);
+        newData = CreateNextSData(prevData, baseColor);
         CreateChanger(effects, prevData, newData);
         break;
 
@@ -163,7 +182,7 @@ Animation *AnimationHandler::CreateAnimation(SData prevData, int64_t now)
         break;
     }
 
-    Animation *animationCurrent = new Animation(newData);
+    Animation *animationCurrent = new Animation(newData, baseColor);
 
     animationCurrent->Setup(effects, now);
     return animationCurrent;
@@ -175,18 +194,21 @@ void AnimationHandler::Setup(Renderer *rndr, ParsedEffectData *eData)
 
     _rndr = rndr;
 
-    baseColor = eData->baseColor;
+    baseColor = DCHSV(eData->baseColor);
+    ColorDelta deltas = ColorDelta(baseColor, 50, 20, 20, 100000, 0, 0);
 
     // CHSV effectColor = CHSV(180, 192, 192);
-    CHSV effectColor2 = CHSV(140, 192, 192);
+    DCHSV effectColor2 = DCHSV(140, 192, 192);
     // CHSV effectColor3 = CHSV(120, 192, 192);
+
+    // ColorChanger colChanger = createLinearColorChanger(startData.c, endData.c, duration);
 
     BaseEffect *backgroundEffect = new BaseEffect(baseColor, nullptr, 0, nullptr, 360, nullptr, 48, nullptr, 0, 0);
     backgroundEffect->isFullRenderTime = true;
     baseEffects.push_back(backgroundEffect);
 
     //_rndr.Setup();
-    animations.push_back(CreateAnimation(SData(effectColor2, 0, 350), now));
-    animations.push_back(CreateAnimation(SData(effectColor2, 4, 350), now));
-    animations.push_back(CreateAnimation(SData(effectColor2, 8, 350), now));
+    animations.push_back(CreateAnimation(SData(effectColor2, 0, 350), deltas, now));
+    animations.push_back(CreateAnimation(SData(effectColor2, 4, 350), deltas, now));
+    animations.push_back(CreateAnimation(SData(effectColor2, 8, 350), deltas, now));
 }

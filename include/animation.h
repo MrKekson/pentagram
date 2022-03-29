@@ -18,8 +18,9 @@ public:
     bool isFinished = false;
 
     SData data;
+    ColorDelta baseColor;
 
-    Animation(SData dta);
+    Animation(SData dta, ColorDelta baseC);
     ~Animation();
 
     std::vector<BaseEffect *> effects;
@@ -29,7 +30,7 @@ public:
     void Update(int64_t now);
 };
 
-Animation::Animation(SData dta) : data(dta)
+Animation::Animation(SData dta, ColorDelta baseC) : data(dta), baseColor(baseC)
 {
 }
 
@@ -43,7 +44,6 @@ Animation::~Animation()
 
 void Animation::Setup(std::vector<BaseEffect *> P_effects, int64_t now)
 {
-    // Serial.print("Anim Setup\n");
     _startTimeStamp = now;
     effects = P_effects;
     for (BaseEffect *e : effects)
@@ -55,12 +55,6 @@ void Animation::Setup(std::vector<BaseEffect *> P_effects, int64_t now)
             _longestEffectTime = e->endTime;
         }
     }
-    // Serial.print(" TIMES: ");
-    // Serial.print(now);
-
-    // Serial.print(" : ");
-    // Serial.print(_longestEffectTime);
-    // Serial.print("_");
 }
 
 void Animation::Update(int64_t now)
