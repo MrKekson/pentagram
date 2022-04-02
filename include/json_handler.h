@@ -33,15 +33,16 @@ public:
         return true;
     }
 
-    ParsedEffectData Read()
+    ParsedAnimationData Read()
     {
+        ParsedAnimationData retData;
 
         if (!SPIFFS.begin(true))
         {
             Serial.println("An Error has occurred while mounting SPIFFS");
         }
 
-        File file = SPIFFS.open("/default.json");
+        File file = SPIFFS.open("/settings.json");
         if (!file)
         {
             Serial.println("Failed to open file for reading");
@@ -64,7 +65,7 @@ public:
 
         file.close();
 
-        StaticJsonDocument<512> doc;
+        StaticJsonDocument<2000> doc;
 
         DeserializationError error = deserializeJson(doc, jsonFileData);
 
@@ -72,26 +73,51 @@ public:
         {
             Serial.print("deserializeJson() failed: ");
             Serial.println(error.c_str());
+
+            // handle error!!! switch to default
         }
 
-        ParsedEffectData eData = ParsedEffectData();
-
-        eData.brightness = doc["brightness"]; // 90
+        retData.brightnes = doc["brightness"]; // 90
 
         JsonObject baseColor = doc["baseColor"];
-        eData.baseColor.h = baseColor["h"]; // 160
-        eData.baseColor.s = baseColor["s"]; // 160
-        eData.baseColor.v = baseColor["v"]; // 64
+
+        retData.baseColor.H = baseColor["h"]; // 160
+        retData.baseColor.S = baseColor["s"]; // 160
+        retData.baseColor.V = baseColor["v"]; // 64
 
         for (JsonObject effect : doc["effects"].as<JsonArray>())
         {
+            ParsedEffectData effData;
 
-            JsonObject effect_effectColor = effect["effectColor"];
-            int effect_effectColor_h = effect_effectColor["h"]; // 180, 140, 80
-            int effect_effectColor_s = effect_effectColor["s"]; // 160, 160, 160
-            int effect_effectColor_v = effect_effectColor["v"]; // 64, 64, 64
+            effData.effectColor = DCHSV(effect["h"], effect["s"], effect["v"]);
+
+            effData.effectDelta.H = effect["h"];
+            effData.effectDelta.S = effect["s"];
+            effData.effectDelta.V = effect["v"];
+
+            effData.effectDelta.deltaH = effect["h_d"];
+            effData.effectDelta.deltaS = effect["s_d"];
+            effData.effectDelta.deltaV = effect["v_d"];
+            effData.effectDelta.chance = effect["c_c"];
+            effData.effectDelta.weight = effect["w"];
+
+            for (JsonObject ratio : effect["ratios"].as<JsonArray>())
+            {
+                ParsedEffectPartData epData = ParsedEffectPartData();
+
+                epData.ratio = ratio["r"];
+                epData.typeId = ratio["typeId"];
+                epData.minTime = ratio["minT"];
+                epData.maxTime = ratio["maxT"];
+                Serial.print(epData.typeId);
+
+                effData.partDatas.push_back(epData);
+            }
+            Serial.println(" r ");
+
+            retData.effectDatas.push_back(effData);
         }
-        return eData;
+        return retData;
     }
 
     bool Write(ParsedEffectData data)

@@ -1,0 +1,222 @@
+<style>
+  body {background: rgb(71, 43, 94)}
+  #container{
+    max-width:500px;
+    margin:auto;
+  }
+  .savebutton{
+    color:white;
+    border-radius:5px;
+    background:rgba(255,255,255,0.7);
+    margin:5px;
+  }
+  .basic-settings{
+    border-radius:5px;
+    padding: 5px;
+    margin:5px;
+    background:rgba(255,255,255,0.7);
+    display: flex;
+    flex-direction: column;
+  }
+  .anim-node{
+    border-radius:5px;
+    padding: 5px;
+    margin:5px;
+    background:rgba(255,255,255,0.7);
+    display: flex;
+    flex-direction: column;
+  }
+  .effect-node{
+    border-radius:5px;
+    padding: 5px;
+    margin:5px;
+    background:rgba(255,255,255,0.7);
+    display: flex;
+    flex-direction: column;
+  }
+  .ratio-node{
+    border-radius:5px;
+    padding: 5px;
+    margin:5px;
+    background:rgba(255,255,255,0.7);
+    display: flex;
+    flex-direction: column;
+  }
+</style>
+<div id="container">
+  <div style="text-align: end"><input type="button" value="Save" class="savebutton" onclick="save()"></div>
+  <div  class="basic-settings">
+    <label>base color</label>
+    <input type="color" id="basecol">
+    <label>brightness</label>
+    <div class="slider-line">min <input type="range"  min="0" max="100" id="basebright"> max</div>
+  </div>
+
+
+</div>
+
+<template id="animtemplate">
+  <div class="anim-node">
+    <input type="text">
+    <label>effects</label>
+    <div class="effectlist"></div>
+  </div>
+</template>
+
+<template id="effecttemplate">
+  <div  class="effect-node">
+    <label>color</label>
+    <input type="color">
+    <label>color deviancy</label>
+    <div class="slider-line">none <input type="range"  min="0" max="100" > max</div>
+    <div class="ratiolist"></div>
+  </div>
+</template>
+
+<template id="ratiotemplate">
+  <div class="ratio-node">
+    <label>transition type</label>
+    <select>
+      <option value="1">trickleTo</option>
+      <option value="2">rotateTo</option>
+      <option value="3">fadeTo</option>
+      <option value="4">hold</option>
+      <option value="5">fadeHold</option>
+    </select>
+    <label>chance to occour</label>
+    <div class="slider-line">none <input type="range"  min="0" max="10" > high</div>
+    <div class="times-line">
+      <label>min time</label>
+      <input type="number">
+      <label>max time</label>
+      <input type="number">
+    </div>
+
+
+  </div>
+</template>
+
+<script>
+//aimations
+//ratioS
+
+
+let mainCont = document.getElementById("container")
+let animTemplate = document.getElementById("animtemplate")
+let effectTemplate = document.getElementById("effecttemplate")
+let ratioTemplate = document.getElementById("ratiotemplate")
+
+var settings;
+load();
+
+function load(){
+  fetch('/settings.json')
+  .then(response => response.json())
+  .then(data => {settings=data; buildUi(settings)});
+}
+
+function save(){
+  fetch('/savesettings', { method: 'POST', headers: { 'Content-Type': 'application/json'  }, body: JSON.stringify(settings)})
+}
+
+function buildUi(data){
+  let baseColorInput = document.getElementById("basecol")
+  let brightnessInput = document.getElementById("basebright")
+  bindColorInput(baseColorInput,data.baseColor,"h","s","v")
+  bindInput(brightnessInput,data,"brightness")
+  
+  data.aimations.forEach((anim)=>{
+    let newAnimNode = animTemplate.content.cloneNode(true)
+    bindInput(newAnimNode.querySelector("input"), anim, "name");
+
+    anim.effects.forEach((effect)=>{
+      let newEffectNode = effectTemplate.content.cloneNode(true)
+      bindColorInput(newEffectNode.querySelector("input"),effect,"h","s","v")
+      bindInput(newEffectNode.querySelector(".slider-line input"),effect,"h_d")
+      
+      effect.ratios.forEach((ratio)=>{
+        let newRatioNode = ratioTemplate.content.cloneNode(true)
+        bindInput(newRatioNode.querySelector(".slider-line input"),ratio,"ratio")
+        bindInput(newRatioNode.querySelector("select"),ratio,"typeID")
+        bindInput(newRatioNode.querySelectorAll(".times-line input")[0],ratio,"minTime")
+        bindInput(newRatioNode.querySelectorAll(".times-line input")[1],ratio,"maxTime")
+
+        newEffectNode.querySelector(".ratiolist").appendChild(newRatioNode)
+      })
+
+      newAnimNode.querySelector(".effectlist").appendChild(newEffectNode)
+    })
+    mainCont.appendChild(newAnimNode)
+
+  })
+}
+
+function bindInput(nodeRef,propertyParent,propertyName){
+  nodeRef.value = propertyParent[propertyName]
+  nodeRef.addEventListener("change",(e)=>{
+    propertyParent[propertyName] = e.target.value;
+    console.log(e.target.value)
+  })
+}
+
+function bindColorInput(nodeRef,propertyParent,propertyNameH,propertyNameS,propertyNameV){
+  setColor(nodeRef,propertyParent[propertyNameH],propertyParent[propertyNameS],propertyParent[propertyNameV])
+  nodeRef.addEventListener("change",(e)=>{
+    let hsv = hexToHsv(e.target.value)
+    propertyParent[propertyNameH] = hsv.h;
+    propertyParent[propertyNameS] = hsv.s;
+    propertyParent[propertyNameV] = hsv.v;
+  })
+}
+
+
+
+
+
+// color fuckery zone
+
+function setColor(nodeRef, h,s,v){
+  nodeRef.value=hsvToHex(h,s,v)
+}
+
+function hexToHsv(hex){ // all hsv values in 255
+  let rgb = hexToRgb(hex)
+  let hsv = rgb2hsv(rgb.r, rgb.g, rgb.b)
+  return {  h:Math.round(hsv[0]*255/360),  s:Math.round(hsv[1]*255),  v:hsv[2]  };
+}
+
+function hsvToHex(h,s,v){ // all hsv values in 255
+  let rgbArr = hsv2rgb(h/255*360,s/255,v/255);
+  let hex = convertRGBtoHex(...rgbArr.map(a=>Math.round(a*255)))
+  return hex;
+}
+
+function rgb2hsv(r,g,b) {
+  let v=Math.max(r,g,b), c=v-Math.min(r,g,b);
+  let h= c && ((v==r) ? (g-b)/c : ((v==g) ? 2+(b-r)/c : 4+(r-g)/c)); 
+  return [60*(h<0?h+6:h), v&&c/v, v];
+}
+function hsv2rgb(h,s,v) 
+{                              
+  let f= (n,k=(n+h/60)%6) => v - v*s*Math.max( Math.min(k,4-k,1), 0);     
+  return [f(5),f(3),f(1)];       
+}  
+function colorToHex(color) {
+  var hexadecimal = color.toString(16);
+  return hexadecimal.length == 1 ? "0" + hexadecimal : hexadecimal;
+}
+function convertRGBtoHex(red, green, blue) {
+  return "#" + colorToHex(red) + colorToHex(green) + colorToHex(blue);
+}
+
+function hexToRgb(hex) {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+
+</script>

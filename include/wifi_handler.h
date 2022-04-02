@@ -28,7 +28,10 @@ void pathRoot()
 bool ServerSetup()
 {
     server.serveStatic("/json/get", SPIFFS, "/settings.json");
+    server.serveStatic("/settings.json", SPIFFS, "/settings.json");
     server.serveStatic("/main.html", SPIFFS, "/main.html");
+    server.serveStatic("/index.html", SPIFFS, "/index.html");
+    server.serveStatic("/", SPIFFS, "/index.html");
     server.serveStatic("/src", SPIFFS, "/src");
     server.begin();
 

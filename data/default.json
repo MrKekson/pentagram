@@ -1,44 +1,81 @@
 {
-    "brightness": 90,
+    "brightness": "120",
     "baseColor": {
-        "h": 140,
-        "s": 160,
-        "v": 96,
-        "h_d": 180,
-        "s_d": 20,
-        "v_d": 10,
-        "d_time_min": 10,
-        "d_time_max": 180
+        "h": 180,
+        "s": 90,
+        "v": 90
     },
-    "effects": [
+    "aimations": [
         {
-            "count": 3,
-            "changerChance": 4,
-            "changerTime": 7,
-            "holderChance": 5,
-            "holderTime": 3,
-            "list": [
+            "name": "default",
+            "effects": [
                 {
-                    "elementType": 1, // elementType: 1 => Changer
-                    "effectType": 1, // FadeTo
-                    "ratio": 20
+                    "h": 90,
+                    "s": 255,
+                    "v": 255,
+                    "h_d": 80,
+                    "s_d": 20,
+                    "v_d": 10,
+                    "ratios": [
+                        {
+                            "typeID": "4",
+                            "ratio": "8",
+                            "minTime": "300",
+                            "maxTime": "1000"
+                        },
+                        {
+                            "typeID": 3,
+                            "ratio": "8",
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        }
+                    ]
                 },
                 {
-                    "elementType": 1, // elementType: 2 => Holder
-                    "effectType": 1, // LightAndHold
-                    "ratio": 20
+                    "h": 180,
+                    "s": 192,
+                    "v": 192,
+                    "h_d": 20,
+                    "s_d": 20,
+                    "v_d": 10,
+                    "ratios": [
+                        {
+                            "typeID": 2,
+                            "ratio": 5,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        },
+                        {
+                            "typeID": 5,
+                            "ratio": 10,
+                            "minTime": "3500",
+                            "maxTime": 10000
+                        }
+                    ]
+                },
+                {
+                    "h": 0,
+                    "s": 0,
+                    "v": 110,
+                    "h_d": 60,
+                    "s_d": 20,
+                    "v_d": 10,
+                    "ratios": [
+                        {
+                            "typeID": 4,
+                            "ratio": 5,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        },
+                        {
+                            "typeID": 3,
+                            "ratio": 10,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        }
+                    ]
                 }
-            ],
-            "effectColor": {
-                "h": 160,
-                "s": 160,
-                "v": 160,
-                "h_d": 60,
-                "s_d": 20,
-                "v_d": 10,
-                "d_time_min": 10,
-                "d_time_max": 180
-            }
+            ]
         }
     ]
 }

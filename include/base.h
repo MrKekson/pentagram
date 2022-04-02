@@ -23,22 +23,6 @@
 
 #define MAX_ANIM_LENGHT (5 * 60 * SEC_TO_MICRO)
 
-struct ParsedEffectData
-{
-    ParsedEffectData()
-    {
-        baseColor = CHSV(180, 180, 64);
-        brightness = DEFAULT_BRIGHTNESS;
-    }
-    ParsedEffectData(int b, CHSV baseC)
-    {
-        baseColor = baseC;
-        brightness = b;
-    }
-    CHSV baseColor;
-    int brightness;
-};
-
 struct DCHSV
 {
     double H;
@@ -57,11 +41,7 @@ struct DCHSV
     DCHSV(double h, double s, double v) : H(h), S(s), V(v) {}
     DCHSV(CHSV c) : H(c.h), S(c.s), V(c.v) {}
 
-    // implicit conversion
     operator CHSV() const { return CHSV(H, S, V); }
-
-    // explicit conversion
-    // explicit operator int *() const { return nullptr; }
 };
 
 struct ColorDelta
@@ -72,11 +52,49 @@ struct ColorDelta
     double deltaH;
     double deltaS;
     double deltaV;
-    int chance; // x/100000
-    int64_t minTime, maxTime;
+    int chance; // rnd() % 100000 < chance, should be displayed as % tho to avoid confusion
+    int weight;
 
-    ColorDelta(double h, double s, double v, double dH, double dS, double dV, int chn, int64_t miT, int64_t mxT) : H(h), S(s), V(v), deltaH(dH), deltaS(dS), deltaV(dV), chance(chn), minTime(miT), maxTime(mxT) {}
-    ColorDelta(DCHSV c, double dH = 0, double dS = 0, double dV = 0, int chn = 0, int64_t miT = 0, int64_t mxT = 0) : H(c.H), S(c.S), V(c.V), deltaH(dH), deltaS(dS), deltaV(dV), chance(chn), minTime(miT), maxTime(mxT) {}
+    ColorDelta() {}
+    ColorDelta(double h, double s, double v, double dH, double dS, double dV, int chn, int w) : H(h), S(s), V(v), deltaH(dH), deltaS(dS), deltaV(dV), chance(chn), weight(w) {}
+    ColorDelta(DCHSV c, double dH = 0, double dS = 0, double dV = 0, int chn = 0, int w = 160) : H(c.H), S(c.S), V(c.V), deltaH(dH), deltaS(dS), deltaV(dV), chance(chn), weight(w) {}
+};
+
+struct ParsedEffectPartData
+{
+    int typeId; // specific types like trickle, lightandhold by id // no mapping yet
+    int ratio;
+    int64_t minTime;
+    int64_t maxTime;
+
+    ParsedEffectPartData() {}
+};
+
+struct ParsedEffectData
+{
+    DCHSV effectColor;
+    ColorDelta effectDelta; // not used yet
+
+    std::vector<ParsedEffectPartData> partDatas;
+};
+
+struct ParsedAnimationData
+{
+    ParsedAnimationData()
+    {
+        baseColor = CHSV(180, 180, 64);
+    }
+
+    ParsedAnimationData(int b, CHSV baseC)
+    {
+        baseColor = baseC;
+    }
+
+    DCHSV baseColor;
+    int brightnes;
+    // ColorDelta baseDelta; // not used yet
+    String name;
+    std::vector<ParsedEffectData> effectDatas;
 };
 
 struct SData
@@ -131,16 +149,3 @@ int DegToSymbol(double numba)
     double pos = int((numba - SYMBOL_OFFSET) / SYMBOL_WIDTH);
     return pos;
 }
-
-// double Clamp(double degNum, double clamp = NUM_DEG) // cyrcle clamp
-//  {
-//      if (degNum >= 0)
-//      {
-//          return fmod(degNum, NUM_DEG);
-//      }
-
-//     if (degNum < 0)
-//     {
-//         return NUM_DEG - fmod(fabs(degNum), NUM_DEG);
-//     }
-// }

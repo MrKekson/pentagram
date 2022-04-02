@@ -22,7 +22,7 @@ public:
     // Animation *animationCurrent;
     AnimationHandler();
     ~AnimationHandler();
-    void Setup(Renderer *rndr, ParsedEffectData *eData);
+    void Setup(Renderer *rndr, ParsedAnimationData *eData);
     void Loop();
 
     // DCHSV GetColourTransitionEndpoint(DCHSV colorTo, int64_t now, int64_t end);
@@ -87,27 +87,36 @@ void AnimationHandler::Loop()
     _rndr->Render(runningEffects, now);
 }
 
-SData CreateNextSData(SData prev, ColorDelta baseCol) // make configurable and range based eg colour +- range etc
+SData CreateNextSData(SData prev, ColorDelta colorDelta) // make configurable and range based eg colour +- range etc
 {
     SData symbolNew = prev;
 
     int rnd = esp_random() % 100;
 
-    double hStep = ((baseCol.deltaH * 2) / 99 * rnd) - baseCol.deltaH;
-
-    double h, s, v;
-    double dH = baseCol.deltaH * 2;
-    if (1)
+    if (colorDelta.chance > 0)
     {
-        h = Clamp(baseCol.H + hStep); // * () + 1 - baseCol.deltaH, 255);
-        // s = Clamp(baseCol.S + esp_random() % 255 + 1 - 128, 255);
-        // v = Clamp(baseCol.V + esp_random() % 255 + 1 - 128, 255);
+        int rndChn = esp_random() % 100;
+
+        if (rndChn > colorDelta.chance)
+        {
+
+            double hStep = ((colorDelta.deltaH * 2) / 99 * rnd) - colorDelta.deltaH;
+
+            Serial.print(hStep);
+            Serial.print(" yolo ");
+
+            double sStep = ((colorDelta.deltaS * 2) / 99 * rnd) - colorDelta.deltaH;
+            double vStep = ((colorDelta.deltaV * 2) / 99 * rnd) - colorDelta.deltaH;
+
+            symbolNew.c.H = Clamp(colorDelta.H + hStep, 255);
+
+            symbolNew.c.S = Clamp(colorDelta.S + sStep, 255);
+            symbolNew.c.V = Clamp(colorDelta.V + vStep, 255);
+
+            Serial.print(symbolNew.c.H);
+            Serial.print(" swag \n");
+        }
     }
-
-    symbolNew.c.H = h;
-
-    // Serial.print(prev.symbol);
-    // Serial.print(" :sym ");
 
     symbolNew.symbol = esp_random() % 12;
 
@@ -188,14 +197,14 @@ Animation *AnimationHandler::CreateAnimation(SData prevData, ColorDelta baseColo
     return animationCurrent;
 }
 
-void AnimationHandler::Setup(Renderer *rndr, ParsedEffectData *eData)
+void AnimationHandler::Setup(Renderer *rndr, ParsedAnimationData *aData)
 {
     int64_t now = esp_timer_get_time();
 
     _rndr = rndr;
 
-    baseColor = DCHSV(eData->baseColor);
-    ColorDelta deltas = ColorDelta(baseColor, 50, 20, 20, 100000, 0, 0);
+    baseColor = DCHSV(aData->baseColor);
+    ColorDelta deltas = ColorDelta(baseColor, 40, 20, 20, 100000);
 
     // CHSV effectColor = CHSV(180, 192, 192);
     DCHSV effectColor2 = DCHSV(140, 192, 192);
@@ -207,8 +216,16 @@ void AnimationHandler::Setup(Renderer *rndr, ParsedEffectData *eData)
     backgroundEffect->isFullRenderTime = true;
     baseEffects.push_back(backgroundEffect);
 
+    for (ParsedEffectData e : aData->effectDatas)
+    {
+        int rnd = esp_random() % 12;
+        Serial.print("ecreate:");
+        Serial.print(e.effectColor.H);
+        Serial.println(e.effectDelta.deltaH);
+        animations.push_back(CreateAnimation(SData(e.effectColor, rnd, e.effectDelta.weight), e.effectDelta, now));
+    }
     //_rndr.Setup();
-    animations.push_back(CreateAnimation(SData(effectColor2, 0, 350), deltas, now));
-    animations.push_back(CreateAnimation(SData(effectColor2, 4, 350), deltas, now));
-    animations.push_back(CreateAnimation(SData(effectColor2, 8, 350), deltas, now));
+    // animations.push_back(CreateAnimation(SData(effectColor2, 0, 350), deltas, now));
+    // animations.push_back(CreateAnimation(SData(effectColor2, 4, 350), deltas, now));
+    // animations.push_back(CreateAnimation(SData(effectColor2, 8, 350), deltas, now));
 }

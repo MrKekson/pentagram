@@ -24,14 +24,27 @@ void setup()
 
   renderer.Setup();
 
-  WifiSetup();
-
+  Serial.println("renderer..OK");
   renderer.SetColor(CHSV(0, 92, 92));
 
-  ParsedEffectData eData = jsonHandler.Read();
+  ParsedAnimationData animations = jsonHandler.Read();
 
-  renderer.SetBrightness(eData.brightness);
-  animHandler.Setup(&renderer, &eData);
+  Serial.print(animations.effectDatas[0].partDatas[0].typeId);
+  Serial.print(", ");
+  Serial.print(animations.effectDatas[0].effectColor.H);
+  Serial.print(", ");
+  Serial.print(animations.effectDatas[0].partDatas[2].typeId);
+  Serial.print(", ");
+  Serial.print("-----\n");
+  Serial.print(animations.effectDatas.size());
+  Serial.print(animations.effectDatas[0].partDatas.size());
+
+  Serial.println("config..OK");
+  WifiSetup();
+  Serial.println("wifi..OK");
+
+  renderer.SetBrightness(animations.brightnes);
+  animHandler.Setup(&renderer, &animations);
 }
 
 void loop()
