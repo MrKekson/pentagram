@@ -49,6 +49,7 @@ struct WCData
 class Renderer
 {
 private:
+    bool active = true;
     int brightness = DEFAULT_BRIGHTNESS;
 
     CHSV _data[NUM_DEG];
@@ -61,7 +62,21 @@ public:
     void Setup();
     void SetBrightness(int b);
     void SetColor(CHSV c);
+    void Deactivate();
+    void Activate();
 };
+
+void Renderer::Activate()
+{
+    active = true;
+}
+
+void Renderer::Deactivate()
+{
+    fill_solid(_leds, NUM_LEDS, CRGB(0, 0, 0));
+    FastLED.show();
+    active = false;
+}
 
 Renderer::Renderer()
 {
@@ -102,122 +117,126 @@ void Renderer::Setup()
 
 void Renderer::Render(const std::vector<BaseEffect *> &effects, int64_t now)
 {
-    int led_width = 3;
-
-    WCData _weightedData[NUM_DEG];
-    // Serial.print("e ");
-    // Serial.print(effects.size());
-    // Serial.print(" ");
-    for (BaseEffect *e : effects)
+    if (active)
     {
-        if (e->isRunning(now) || e->isFullRenderTime)
+        /* code */
+
+        int led_width = 3;
+
+        WCData _weightedData[NUM_DEG];
+        // Serial.print("e ");
+        // Serial.print(effects.size());
+        // Serial.print(" ");
+        for (BaseEffect *e : effects)
         {
-            // Serial.print(u_int(e));
-            // Serial.print(" d: ");
-            // Serial.print((double)e->_deg);
-            // Serial.print(" w: ");
-            // Serial.print((double)e->_width);
-
-            // Serial.print(" FÁK");
-            double halfWidth = e->_width / 2.0;
-            double minDeg = e->_deg - halfWidth;
-            double maxDeg = e->_deg + halfWidth;
-
-            // Serial.print("FÁK ");
-            //  Serial.print(halfWidth);
-            //  Serial.print(" -- ");
-            //  Serial.print(e->_deg);
-            //  Serial.print(" -- ");
-            //  Serial.print(minDeg);
-            //  Serial.print(" -- ");
-            //  Serial.print(maxDeg);
-            //  Serial.print(" \n ");
-
-            for (int i = minDeg; i <= maxDeg; i++)
+            if (e->isRunning(now) || e->isFullRenderTime)
             {
-                int j = Clamp(i);
+                // Serial.print(u_int(e));
+                // Serial.print(" d: ");
+                // Serial.print((double)e->_deg);
+                // Serial.print(" w: ");
+                // Serial.print((double)e->_width);
 
-                _weightedData[j].h += e->_c.H * e->_rWeight;
-                _weightedData[j].s += e->_c.S * e->_rWeight;
-                _weightedData[j].v += e->_c.V * e->_rWeight;
-                _weightedData[j].currentWeight += e->_rWeight;
+                // Serial.print(" FÁK");
+                double halfWidth = e->_width / 2.0;
+                double minDeg = e->_deg - halfWidth;
+                double maxDeg = e->_deg + halfWidth;
 
-                // Serial.print(' ');
-                // Serial.print(_weightedData[j].currentWeight);
+                // Serial.print("FÁK ");
+                //  Serial.print(halfWidth);
+                //  Serial.print(" -- ");
+                //  Serial.print(e->_deg);
+                //  Serial.print(" -- ");
+                //  Serial.print(minDeg);
+                //  Serial.print(" -- ");
+                //  Serial.print(maxDeg);
+                //  Serial.print(" \n ");
+
+                for (int i = minDeg; i <= maxDeg; i++)
+                {
+                    int j = Clamp(i);
+
+                    _weightedData[j].h += e->_c.H * e->_rWeight;
+                    _weightedData[j].s += e->_c.S * e->_rWeight;
+                    _weightedData[j].v += e->_c.V * e->_rWeight;
+                    _weightedData[j].currentWeight += e->_rWeight;
+
+                    // Serial.print(' ');
+                    // Serial.print(_weightedData[j].currentWeight);
+                }
+            }
+
+            // Serial.print('\n');
+        }
+        // Serial.print("n");
+
+        // Serial.print("\n rendering 360 \n");
+        for (int i = 0; i < NUM_DEG; ++i)
+        {
+            // Serial.print("i:");
+            // Serial.print(i);
+            // Serial.print(" h:");
+            // Serial.print(_weightedData[i].h);
+            // Serial.print(" w: ");
+            // Serial.print(_weightedData[i].currentWeight);
+            // Serial.print(" \n: ");
+
+            if (_weightedData[i].currentWeight > 0)
+            {
+                _data[i].h = _weightedData[i].h / _weightedData[i].currentWeight;
+                _data[i].s = _weightedData[i].s / _weightedData[i].currentWeight;
+                _data[i].v = _weightedData[i].v / _weightedData[i].currentWeight;
+
+                // Serial.print("_");
+                // Serial.print(_data[i].s);
+                // Serial.print("_");
+                // Serial.print(_data[i].v);
+                // Serial.print(_data[i].h);
+                // Serial.print(" ");
             }
         }
-
-        // Serial.print('\n');
-    }
-    // Serial.print("n");
-
-    // Serial.print("\n rendering 360 \n");
-    for (int i = 0; i < NUM_DEG; ++i)
-    {
-        // Serial.print("i:");
-        // Serial.print(i);
-        // Serial.print(" h:");
-        // Serial.print(_weightedData[i].h);
-        // Serial.print(" w: ");
-        // Serial.print(_weightedData[i].currentWeight);
         // Serial.print(" \n: ");
+        // Serial.print("d");
+        // Serial.print("rendering leds \n");
 
-        if (_weightedData[i].currentWeight > 0)
+        for (int i = 0; i < NUM_LEDS; i++)
         {
-            _data[i].h = _weightedData[i].h / _weightedData[i].currentWeight;
-            _data[i].s = _weightedData[i].s / _weightedData[i].currentWeight;
-            _data[i].v = _weightedData[i].v / _weightedData[i].currentWeight;
+            int di = i * LED_RATIO - POS_CORRECTION;
 
-            // Serial.print("_");
-            // Serial.print(_data[i].s);
-            // Serial.print("_");
-            // Serial.print(_data[i].v);
-            // Serial.print(_data[i].h);
-            // Serial.print(" ");
-        }
-    }
-    // Serial.print(" \n: ");
-    // Serial.print("d");
-    // Serial.print("rendering leds \n");
+            int h = 0, s = 0, v = 0, count = 0;
+            int lnum = 0;
 
-    for (int i = 0; i < NUM_LEDS; i++)
-    {
-        int di = i * LED_RATIO - POS_CORRECTION;
-
-        int h = 0, s = 0, v = 0, count = 0;
-        int lnum = 0;
-
-        for (int dnum = di - led_width; dnum < di + led_width; dnum++)
-        {
-            count++;
-            lnum = Clamp(dnum);
-
-            h += _data[lnum].h;
-            s += _data[lnum].s;
-            v += _data[lnum].v;
-
-            if (dnum == di)
+            for (int dnum = di - led_width; dnum < di + led_width; dnum++)
             {
-                count += 2;
+                count++;
                 lnum = Clamp(dnum);
 
-                h += _data[lnum].h * 2;
-                s += _data[lnum].s * 2;
-                v += _data[lnum].v * 2;
+                h += _data[lnum].h;
+                s += _data[lnum].s;
+                v += _data[lnum].v;
+
+                if (dnum == di)
+                {
+                    count += 2;
+                    lnum = Clamp(dnum);
+
+                    h += _data[lnum].h * 2;
+                    s += _data[lnum].s * 2;
+                    v += _data[lnum].v * 2;
+                }
+
+                // weighted in middle, but maybe not ok
             }
+            h = h / count;
+            s = s / count;
+            v = v / count;
 
-            // weighted in middle, but maybe not ok
+            _leds[NUM_LEDS - 1 - i] = CHSV(h, s, v);
         }
-        h = h / count;
-        s = s / count;
-        v = v / count;
+        // Serial.print("e");
 
-        _leds[NUM_LEDS - 1 - i] = CHSV(h, s, v);
+        FastLED.setBrightness(brightness);
+        FastLED.show();
     }
-    // Serial.print("e");
-
-    FastLED.setBrightness(brightness);
-    FastLED.show();
-
     // Serial.print("r");
 }

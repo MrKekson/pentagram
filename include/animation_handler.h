@@ -24,9 +24,7 @@ public:
     ~AnimationHandler();
     void Setup(Renderer *rndr, ParsedAnimationData *eData);
     void Loop();
-
-    // DCHSV GetColourTransitionEndpoint(DCHSV colorTo, int64_t now, int64_t end);
-    // void SetBaseColor(DCHSV c);
+    void Reset();
 
     Animation *CreateAnimation(SData prevData, ColorDelta delta, int64_t now);
 
@@ -35,7 +33,6 @@ public:
 
     std::vector<BaseEffect *> baseEffects;
     std::vector<Animation *> animations;
-    // std::pair<SData, SData> CreateNextSData(SData &prev);
 };
 
 AnimationHandler::AnimationHandler()
@@ -44,21 +41,21 @@ AnimationHandler::AnimationHandler()
 
 AnimationHandler::~AnimationHandler()
 {
-    // Serial.print("WHAT THE");
     for (Animation *a : animations)
     {
         delete a;
-        // Serial.print(" FUCK");
     }
+}
+
+void AnimationHandler::Reset()
+{
+    baseEffects.clear();
+    animations.clear();
 }
 
 void AnimationHandler::Loop()
 {
     int64_t now = esp_timer_get_time();
-
-    // Serial.print('NOW: ');
-    // Serial.print(now);
-    // Serial.print(' ');
 
     std::vector<BaseEffect *> runningEffects;
     runningEffects.insert(runningEffects.end(), baseEffects.begin(), baseEffects.end());
@@ -70,15 +67,10 @@ void AnimationHandler::Loop()
         a->Update(now);
         if (a->isFinished)
         {
-            // Serial.print("wtf:  ");
-            // Serial.print(animations.size());
-            // Serial.print(" smash ");
-            // Serial.print(i);
-            // Serial.print("; ");
             SData temp = a->data;
             ColorDelta tempBaseCol = a->baseColor;
             delete a;
-            animations[i] = CreateAnimation(temp, tempBaseCol, now); // eraSE(BEGIN, REMOVE(BEGIN,END))v.erase(std::remove_if(v.begin(), v.end(), IsOdd), v.end());
+            animations[i] = CreateAnimation(temp, tempBaseCol, now);
         }
 
         runningEffects.insert(runningEffects.end(), animations[i]->effects.begin(), animations[i]->effects.end());
@@ -200,32 +192,18 @@ Animation *AnimationHandler::CreateAnimation(SData prevData, ColorDelta baseColo
 void AnimationHandler::Setup(Renderer *rndr, ParsedAnimationData *aData)
 {
     int64_t now = esp_timer_get_time();
-
     _rndr = rndr;
 
-    baseColor = DCHSV(aData->baseColor);
-    ColorDelta deltas = ColorDelta(baseColor, 40, 20, 20, 100000);
-
-    // CHSV effectColor = CHSV(180, 192, 192);
-    DCHSV effectColor2 = DCHSV(140, 192, 192);
-    // CHSV effectColor3 = CHSV(120, 192, 192);
-
-    // ColorChanger colChanger = createLinearColorChanger(startData.c, endData.c, duration);
-
-    BaseEffect *backgroundEffect = new BaseEffect(baseColor, nullptr, 0, nullptr, 360, nullptr, 48, nullptr, 0, 0);
+    BaseEffect *backgroundEffect = new BaseEffect(aData->baseColor, nullptr, 0, nullptr, 360, nullptr, 50, nullptr, 0, 0);
     backgroundEffect->isFullRenderTime = true;
     baseEffects.push_back(backgroundEffect);
 
     for (ParsedEffectData e : aData->effectDatas)
     {
-        int rnd = esp_random() % 12;
-        Serial.print("ecreate:");
-        Serial.print(e.effectColor.H);
-        Serial.println(e.effectDelta.deltaH);
-        animations.push_back(CreateAnimation(SData(e.effectColor, rnd, e.effectDelta.weight), e.effectDelta, now));
+        if (e.effectDelta.weight > 0)
+        {
+            int rnd = esp_random() % 12;
+            animations.push_back(CreateAnimation(SData(e.effectColor, rnd, e.effectDelta.weight), e.effectDelta, now));
+        }
     }
-    //_rndr.Setup();
-    // animations.push_back(CreateAnimation(SData(effectColor2, 0, 350), deltas, now));
-    // animations.push_back(CreateAnimation(SData(effectColor2, 4, 350), deltas, now));
-    // animations.push_back(CreateAnimation(SData(effectColor2, 8, 350), deltas, now));
 }

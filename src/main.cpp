@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <FastLED.h>
 
-#include "wifi_handler.h"
 #include "json_handler.h"
 #include "renderer.h"
 #include "animation_handler.h"
@@ -18,6 +17,8 @@ AnimationHandler animHandler = AnimationHandler();
 Renderer renderer = Renderer();
 JsonHandler jsonHandler = JsonHandler();
 
+#include "wifi_handler.h"
+
 void setup()
 {
   Serial.begin(115200);
@@ -28,16 +29,6 @@ void setup()
   renderer.SetColor(CHSV(0, 92, 92));
 
   ParsedAnimationData animations = jsonHandler.Read();
-
-  Serial.print(animations.effectDatas[0].partDatas[0].typeId);
-  Serial.print(", ");
-  Serial.print(animations.effectDatas[0].effectColor.H);
-  Serial.print(", ");
-  Serial.print(animations.effectDatas[0].partDatas[2].typeId);
-  Serial.print(", ");
-  Serial.print("-----\n");
-  Serial.print(animations.effectDatas.size());
-  Serial.print(animations.effectDatas[0].partDatas.size());
 
   Serial.println("config..OK");
   WifiSetup();

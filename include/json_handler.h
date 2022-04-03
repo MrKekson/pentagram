@@ -8,31 +8,6 @@
 class JsonHandler
 {
 public:
-    bool ResetToDefault()
-    {
-        if (!SPIFFS.begin(true))
-        {
-            Serial.println("An Error has occurred while mounting SPIFFS");
-            return false;
-        }
-
-        File sourceFile = SPIFFS.open("/base.json");
-        if (!sourceFile)
-        {
-            Serial.println("Failed to open source");
-            return false;
-        }
-
-        File targetFile = SPIFFS.open("/base.json");
-        if (!targetFile)
-        {
-            Serial.println("Failed to open target");
-            return false;
-        }
-
-        return true;
-    }
-
     ParsedAnimationData Read()
     {
         ParsedAnimationData retData;
@@ -65,7 +40,7 @@ public:
 
         file.close();
 
-        StaticJsonDocument<2000> doc;
+        StaticJsonDocument<3000> doc;
 
         DeserializationError error = deserializeJson(doc, jsonFileData);
 
