@@ -19,6 +19,7 @@ public:
 
     SData data;
     ColorDelta baseColor;
+    std::vector<ParsedEffectPartData> ratiosData;
 
     Animation(SData dta, ColorDelta baseC);
     ~Animation();

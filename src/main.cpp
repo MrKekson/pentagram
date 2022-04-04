@@ -59,25 +59,25 @@ void loop()
     loopTime = (loopTime + lTime + lTime) / 3;
   }
 
-  EVERY_N_MILLISECONDS(1000)
-  {
-    Serial.print("\n");
-    Serial.print(loopCount);
-    Serial.print("FPS -- ");
-    Serial.print(renderTime / 1000);
-    Serial.print(" R ");
-    Serial.print(totalLoops);
-    Serial.print(" :TOTAL ");
-    uint32_t memDelta = (meminfo - ESP.getFreeHeap()) / 1024;
-    Serial.print(memDelta);
-    Serial.print(" M ");
+  // EVERY_N_MILLISECONDS(1000)
+  // {
+  //   Serial.print("\n");
+  //   Serial.print(loopCount);
+  //   Serial.print("FPS -- ");
+  //   Serial.print(renderTime / 1000);
+  //   Serial.print(" R ");
+  //   Serial.print(totalLoops);
+  //   Serial.print(" :TOTAL ");
+  //   uint32_t memDelta = (meminfo - ESP.getFreeHeap()) / 1024;
+  //   Serial.print(memDelta);
+  //   Serial.print(" M ");
 
-    meminfo = ESP.getFreeHeap();
-    Serial.print(meminfo);
-    Serial.print("\n");
-    loopCount = 0;
-    totalLoops++;
-    renderTime = 0;
-    loopTime = 0;
-  }
+  //   meminfo = ESP.getFreeHeap();
+  //   Serial.print(meminfo);
+  //   Serial.print("\n");
+  //   loopCount = 0;
+  //   totalLoops++;
+  //   renderTime = 0;
+  //   loopTime = 0;
+  // }
 }

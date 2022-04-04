@@ -26,7 +26,7 @@ public:
     void Loop();
     void Reset();
 
-    Animation *CreateAnimation(SData prevData, ColorDelta delta, int64_t now);
+    Animation *CreateAnimation(SData prevData, ColorDelta delta, std::vector<ParsedEffectPartData> ratios, int64_t now);
 
     CHSV baseColor;
     std::vector<SData> symbolData;
@@ -69,8 +69,9 @@ void AnimationHandler::Loop()
         {
             SData temp = a->data;
             ColorDelta tempBaseCol = a->baseColor;
+            std::vector<ParsedEffectPartData> ratios = a->ratiosData;
             delete a;
-            animations[i] = CreateAnimation(temp, tempBaseCol, now);
+            animations[i] = CreateAnimation(temp, tempBaseCol, ratios, now);
         }
 
         runningEffects.insert(runningEffects.end(), animations[i]->effects.begin(), animations[i]->effects.end());
@@ -89,21 +90,20 @@ SData CreateNextSData(SData prev, ColorDelta colorDelta) // make configurable an
     {
         int rndChn = esp_random() % 100;
 
-        if (rndChn > colorDelta.chance)
+        if (rndChn < colorDelta.chance)
         {
 
             double hStep = ((colorDelta.deltaH * 2) / 99 * rnd) - colorDelta.deltaH;
+            symbolNew.c.H = Clamp(colorDelta.H + hStep, 255);
 
             Serial.print(hStep);
             Serial.print(" yolo ");
 
-            double sStep = ((colorDelta.deltaS * 2) / 99 * rnd) - colorDelta.deltaH;
-            double vStep = ((colorDelta.deltaV * 2) / 99 * rnd) - colorDelta.deltaH;
+            // double sStep = ((colorDelta.deltaS * 2) / 99 * rnd) - colorDelta.deltaS;
+            // double vStep = ((colorDelta.deltaV * 2) / 99 * rnd) - colorDelta.deltaV;
 
-            symbolNew.c.H = Clamp(colorDelta.H + hStep, 255);
-
-            symbolNew.c.S = Clamp(colorDelta.S + sStep, 255);
-            symbolNew.c.V = Clamp(colorDelta.V + vStep, 255);
+            // symbolNew.c.S = Clamp(colorDelta.S + sStep, 255);
+            // symbolNew.c.V = Clamp(colorDelta.V + vStep, 255);
 
             Serial.print(symbolNew.c.H);
             Serial.print(" swag \n");
@@ -115,75 +115,91 @@ SData CreateNextSData(SData prev, ColorDelta colorDelta) // make configurable an
     return symbolNew;
 }
 
-void CreateHolder(std::vector<BaseEffect *> &effects, SData prevData)
+SData CreateEffcetsById(std::vector<BaseEffect *> &effects, int effectId, SData prevData, SData nextData, int64_t animEndTime)
 {
-    int ePlay = esp_random() % 100; // shoulb be weighed chnage chooser, then weighted effect chances
-
-    int64_t animEndTime = (rand() % 10 + 2) * SEC_TO_MICRO; // must be at least 2 or it can get jumpy
-
-    SData newData = prevData;
-    newData.weight = 30;
-
-    switch (ePlay)
+    SData retData = nextData;
+    switch (effectId)
     {
-    case 0 ... 49:
-        effects = LightAndHold(prevData, prevData, 0, animEndTime);
-        break;
-    default:
-        effects = LightAndHold(prevData, newData, 0, animEndTime);
-        break;
-    }
-}
-
-void CreateChanger(std::vector<BaseEffect *> &effects, SData prevData, SData nextData)
-{
-    int ePlay = esp_random() % 100 + 1; // shoulb be weighed chnage chooser, then weighted effect chances
-
-    int64_t animEndTime = (rand() % 7 + 3) * SEC_TO_MICRO; // should be diff for chnage and hold
-    // int64_t animEndTime = (3) * SEC_TO_MICRO; // should be diff for chnage and hold
-
-    // achance BCHANCE
-    switch (ePlay)
-    {
-        // 1..ACHANCE
-
-    case 1 ... 20:
+    case 1:
         effects = Trickle(prevData, nextData, 0, animEndTime);
         break;
-        // ACHANCE .. ACHANCE+BCHANCE
-    case 21 ... 50:
+    case 2:
         effects = RotateTo(prevData, nextData, 0, animEndTime);
         break;
-        // ACHANCE .. ACHANCE+BCHANCE
-    default:
+    case 3:
         effects = FadeTo(prevData, nextData, 0, animEndTime);
         break;
+    case 1000:
+        effects = LightAndHold(prevData, prevData, 0, animEndTime);
+        retData = prevData;
+        break;
+    case 1001:
+        effects = LightAndHold(prevData, nextData, 0, animEndTime);
+        retData = prevData;
+        break;
     }
-    // Serial.print(" DONE");
+    return retData;
 }
 
-Animation *AnimationHandler::CreateAnimation(SData prevData, ColorDelta baseColor, int64_t now)
+Animation *AnimationHandler::CreateAnimation(SData prevData, ColorDelta colorDelta, std::vector<ParsedEffectPartData> ratios, int64_t now)
 {
-    int ePlay = esp_random() % 10 + 1; // shoulb be weighed chnage chooser, then weighted effect chances
-
     std::vector<BaseEffect *> effects;
-
     SData newData;
 
-    switch (ePlay)
-    {
-    case 1 ... 3:
-        newData = CreateNextSData(prevData, baseColor);
-        CreateChanger(effects, prevData, newData);
-        break;
+    static int effectNum = ratios.size();
 
-    default:
-        newData = prevData;
-        CreateHolder(effects, prevData);
-        break;
+    int effectRatioEndpoints[effectNum + 1];
+
+    Serial.print(ratios.size());
+    Serial.print("- ratiosize \n");
+
+    int ratioCount = 0;
+
+    for (int i = 0; i < effectNum; i++)
+    {
+        if (colorDelta.weight > 0)
+        {
+            Serial.print(ratioCount);
+            Serial.print(" :rcount ");
+            Serial.print(ratios[i].ratio);
+            Serial.print(" :ratio  \n");
+        }
+        effectRatioEndpoints[i] = ratioCount + ratios[i].ratio;
+        ratioCount += ratios[i].ratio;
     }
 
-    Animation *animationCurrent = new Animation(newData, baseColor);
+    int chn = esp_random() % ratioCount;
+
+    if (colorDelta.weight > 0)
+    {
+        Serial.print(chn);
+        Serial.print(" :chn  \n");
+    }
+    bool finished = false;
+    int i = 0;
+
+    while (i < effectNum && !finished)
+    {
+        if (chn < effectRatioEndpoints[i])
+        {
+            if (colorDelta.weight > 0)
+            {
+                Serial.print(effectRatioEndpoints[i]);
+                Serial.print(" :end  ");
+                Serial.print(chn);
+                Serial.print(" :chn  \n");
+            }
+            newData = CreateNextSData(prevData, colorDelta);
+            int64_t endTime = (rand() % ratios[i].maxTime + ratios[i].minTime) * 1000;
+
+            newData = CreateEffcetsById(effects, ratios[i].typeId, prevData, newData, endTime);
+            finished = true;
+        }
+        i++;
+    }
+
+    Animation *animationCurrent = new Animation(newData, colorDelta);
+    animationCurrent->ratiosData = ratios;
 
     animationCurrent->Setup(effects, now);
     return animationCurrent;
@@ -203,7 +219,7 @@ void AnimationHandler::Setup(Renderer *rndr, ParsedAnimationData *aData)
         if (e.effectDelta.weight > 0)
         {
             int rnd = esp_random() % 12;
-            animations.push_back(CreateAnimation(SData(e.effectColor, rnd, e.effectDelta.weight), e.effectDelta, now));
+            animations.push_back(CreateAnimation(SData(e.effectColor, rnd, e.effectDelta.weight), e.effectDelta, e.partDatas, now));
         }
     }
 }

@@ -7,8 +7,8 @@
 
 WebServer server(80);
 
-const char *ssid = "ASUS_80";
-const char *password = "keeper_4664";
+const char *ssid = "MAgicCircle";
+const char *pwd = "MonaMegistus22";
 
 IPAddress local_IP = IPAddress(192, 168, 50, 95);
 IPAddress gateway = IPAddress(192, 168, 50, 1);
@@ -103,22 +103,27 @@ void saveFile()
 
 void resetConfigToDefault()
 {
-    File target = SPIFFS.open("/settings.json", FILE_WRITE);
-    File source = SPIFFS.open("/default.json", FILE_READ);
+    // File target = SPIFFS.open("/settings.json", FILE_WRITE);
+    // File source = SPIFFS.open("/default.json", FILE_READ);
 
-    if (!target || !source)
-    {
-        Serial.println("There was an error opening the file for writing");
-        server.send(500, "text/plain", "crap");
-        return;
-    }
+    // if (!target || !source)
+    // {
+    //     Serial.println("There was an error opening the file for writing");
+    //     server.send(500, "text/plain", "crap");
+    //     return;
+    // }
+    // int data;
 
-    target.print(source.read());
+    // while ((data = source.read()) >= 0)
+    // {
+    //     target.write(source.read());
+    // }
 
-    target.close();
-    source.close();
-
+    // target.close();
+    // source.close();
     server.send(200, "text/plain", "Fasza!");
+    delay(1000);
+    resetAnimation();
 }
 
 bool ServerSetup()
@@ -145,19 +150,19 @@ bool ServerSetup()
 
 bool WifiSetup()
 {
-    WiFi.mode(WIFI_STA);
+    // WiFi.mode(WIFI_STA);
     WiFi.disconnect();
     delay(100);
 
-    if (!WiFi.config(local_IP, gateway, subnet, primaryDNS, secondaryDNS))
-    {
-        Serial.println("STA Failed to configure");
-        return false;
-    }
+    Serial.println(WiFi.softAPConfig(local_IP, gateway, subnet) ? "Ready" : "Failed!");
+
+    WiFi.softAP(ssid, pwd);
+
+    Serial.println(WiFi.softAPIP());
 
     Serial.print("Connecting to ");
     Serial.println(ssid);
-    WiFi.begin(ssid, password);
+
     while (WiFi.status() != WL_CONNECTED)
     {
         delay(500);

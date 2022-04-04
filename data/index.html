@@ -8,6 +8,7 @@ body {
   background: rgb(71, 43, 94);
   font-family: antique;
   font-size: 21px;
+  margin: 0px;
 }
 #container{
   max-width:1000px;
@@ -18,7 +19,7 @@ body {
   position: fixed;
   top: 0;
   width: 100%;
-  background-color: white;
+  background-color: rgb(71, 43, 94);;
 }
 .button{
   color: #053080;
@@ -51,7 +52,7 @@ body {
 }
 .effect-node{
   border-radius:5px;
-  padding: 5px;
+  padding: 20px;
   margin:5px 5px 15px;
   background:rgba(255,255,255,0.7);
   display: flex;
@@ -67,7 +68,8 @@ body {
 }
 .times{ 
   width: 40%;
-  float: right;
+  float: left;
+  margin-left: 3%;
 }
 .head_spacer{
   margin-top: 70px;
@@ -142,6 +144,16 @@ input[type=color]{
 label{
   padding-bottom: 5px;
 }
+.spacer{
+  height:10px;
+}
+
+.effect-name{
+  font-family: antique;
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+}
 </style>
 
 <div class="header_buttons">
@@ -172,16 +184,17 @@ label{
 
 <template id="effecttemplate">
   <div  class="effect-node">
-    <div>
-    <label class="switch">
-      <input type="checkbox">
-      <span class="slider round"></span>
-    </label>
-    </div>
     <label>Effect Color</label>
     <input type="color">
     <label>Color Hue Drift</label>
+    <div class="spacer"></div>
     <div class="slider-line">none <input type="range"  min="0" max="128" > max</div>
+    <label>Color Change Chance</label>
+    <div class="spacer"></div>
+    <div class="slider-line-chance">none <input type="range"  min="0" max="255" > max</div>
+    <label>Color Mix Weight</label>
+    <div class="spacer"></div>
+    <div class="slider-line-weight">none <input type="range"  min="0" max="255" > max</div>
     <div class="ratiolist"></div>
   </div>
 </template>
@@ -189,7 +202,7 @@ label{
 <template id="ratiotemplate">
   <div class="ratio-node">
     <label>Effect type</label>
-    <select disabled>
+    <select disabled class="effect-name">
       <option value="1">trickle to</option>
       <option value="2">rotate to</option>
       <option value="3">fade to</option>
@@ -201,11 +214,11 @@ label{
     <div class="times-line">
       <div class="times">
         <label>Min time</label>
-        <input type="number">
+        <input type="number" min="3000" max="10000">
       </div>
       <div class="times"></div>
         <label>Max time</label>
-        <input type="number">
+        <input type="number" min="5000" max="30000">
       </div>
     </div>
 
@@ -216,6 +229,7 @@ label{
 <script>
 
 let mainCont = document.getElementById("container")
+let savedCont = mainCont.innerHTML;
 let animTemplate = document.getElementById("animtemplate")
 let effectTemplate = document.getElementById("effecttemplate")
 let ratioTemplate = document.getElementById("ratiotemplate")
@@ -224,8 +238,16 @@ var settings;
 load();
 
 function reset(){
-  if(confirm('Are you sure you want to reset to defaults?')){fetch('/reset').then(setTimeout(location.reload(), 1000))};
+  if(confirm('Are you sure you want to reset to defaults?')){fetch('/reset').then(()=>{loadDefault()})};
 }
+
+function loadDefault(){
+  fetch('/default.json')
+  .then(response => response.json())
+  .then(data => {settings=data; save();  buildUi(settings);})
+  
+}
+
 function load(){
   fetch('/settings.json')
   .then(response => response.json())
@@ -238,6 +260,7 @@ function save(){
 
 function buildUi(data){
 
+  mainCont.innerHTML = savedCont;
   let brightnessInput = document.getElementById("basebright")
   bindInput(brightnessInput,data,"brightness")
   
@@ -246,12 +269,15 @@ function buildUi(data){
     bindColorInput(baseColorInput,data.baseColor,"h","s","v")
 
     let newAnimNode = animTemplate.content.cloneNode(true)
-    //bindInput(newAnimNode.querySelector("input"), anim, "name");
 
     data.effects.forEach((effect)=>{
       let newEffectNode = effectTemplate.content.cloneNode(true)
       bindColorInput(newEffectNode.querySelector("input"),effect,"h","s","v")
       bindInput(newEffectNode.querySelector(".slider-line input"),effect,"h_d")
+      bindInput(newEffectNode.querySelector(".slider-line-chance input"),effect,"c_c")
+      bindInput(newEffectNode.querySelector(".slider-line-weight input"),effect,"w")
+
+      
       
       effect.ratios.forEach((ratio)=>{
         let newRatioNode = ratioTemplate.content.cloneNode(true)
@@ -278,13 +304,7 @@ function bindInput(nodeRef,propertyParent,propertyName){
   })
 }
 
-function bindSwitch(nodeRef,propertyParent,propertyName){
-  nodeRef.value = propertyParent[propertyName]
-  nodeRef.addEventListener("change",(e)=>{
-    propertyParent[propertyName] = e.target.value;
-    console.log(e.target.value)
-  })
-}
+
 
 function bindColorInput(nodeRef,propertyParent,propertyNameH,propertyNameS,propertyNameV){
   setColor(nodeRef,propertyParent[propertyNameH],propertyParent[propertyNameS],propertyParent[propertyNameV])
@@ -296,7 +316,6 @@ function bindColorInput(nodeRef,propertyParent,propertyNameH,propertyNameS,prope
     if(nodeRef.id == 'basecol'){
       let cData = '{"h":' + hsv.h + ',"s":' + hsv.s + ',"v":' + hsv.v + '}';
       fetch('/setcolor', { method: 'POST', body: cData});
-      document.body.style.backgroundColor = hsv2rgb(hsv);
     }
   })
 }
