@@ -106,9 +106,9 @@ void Renderer::Setup()
     FastLED.setBrightness(brightness);
     FastLED.clear();
 
-    for (size_t i = 0; i < 255; i++)
+    for (size_t i = 0; i <= 255; i++)
     {
-        int col = Clamp(i + 180, 255);
+        int col = Clamp(i, 255);
         fill_solid(_leds, NUM_LEDS, CRGB(CHSV(col, 128, 128)));
         FastLED.show();
         delay(5);

@@ -7,11 +7,11 @@
 
 WebServer server(80);
 
-const char *ssid = "MAgicCircle";
-const char *pwd = "MonaMegistus22";
+const char *ssid = "MagicCircle";
+const char *pwd = "MonaMegistus";
 
-IPAddress local_IP = IPAddress(192, 168, 50, 95);
-IPAddress gateway = IPAddress(192, 168, 50, 1);
+IPAddress local_IP = IPAddress(192, 168, 1, 1);
+IPAddress gateway = IPAddress(192, 168, 1, 1);
 
 IPAddress subnet = IPAddress(255, 255, 0, 0);
 IPAddress primaryDNS = IPAddress(8, 8, 8, 8);
@@ -162,12 +162,6 @@ bool WifiSetup()
 
     Serial.print("Connecting to ");
     Serial.println(ssid);
-
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(500);
-        Serial.print(".");
-    }
 
     Serial.println("");
     Serial.println("WiFi connected.");
