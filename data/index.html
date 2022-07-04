@@ -1,0 +1,371 @@
+<style>
+
+@font-face {
+  font-family: antique;
+  src: url("/antique.ttf");
+}
+body {
+  background: rgb(71, 43, 94);
+  font-family: antique;
+  font-size: 21px;
+  margin: 0px;
+}
+#container{
+  max-width:1000px;
+  margin:auto;
+}
+.header_buttons{
+  height: 50px;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  background-color: rgb(71, 43, 94);;
+}
+.button{
+  color: #053080;
+  border-radius: 5px;
+  background: rgba(255,255,255,0.7);
+  font-family: antique;
+  font-size: 25px;
+  width: 95%;
+  margin-right: 5%;
+}
+.button_container{
+  float: left;
+  width: 25%;
+}
+.basic-settings{
+  border-radius:5px;
+  padding: 5px;
+  margin:5px;
+  background:rgba(255,255,255,0.7);
+  display: flex;
+  flex-direction: column;
+}
+.anim-node{
+  border-radius:5px;
+  padding: 5px;
+  margin:5px;
+  background:rgba(255,255,255,0.7);
+  display: flex;
+  flex-direction: column;
+}
+.effect-node{
+  border-radius:5px;
+  padding: 20px;
+  margin:5px 5px 15px;
+  background:rgba(255,255,255,0.7);
+  display: flex;
+  flex-direction: column;
+}
+.ratio-node{
+  border-radius:5px;
+  padding: 5px;
+  margin:5px;
+  background:rgba(255,255,255,0.7);
+  display: flex;
+  flex-direction: column;
+}
+.times{ 
+  width: 40%;
+  float: left;
+  margin-left: 3%;
+}
+.head_spacer{
+  margin-top: 70px;
+}
+
+.switch {
+  position: relative;
+  width: 60px;
+  height: 34px;
+  float: right;
+}
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  -webkit-transition: .4s;
+  transition: .4s;
+}
+
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+input:focus + .slider {
+  box-shadow: 0 0 1px #2196F3;
+}
+
+input:checked + .slider:before {
+  -webkit-transform: translateX(26px);
+  -ms-transform: translateX(26px);
+  transform: translateX(26px);
+}
+
+.slider.round {
+  border-radius: 34px;
+}
+
+.slider.round:before {
+  border-radius: 50%;
+} 
+
+input[type=range]{
+  width:80%;
+  margin:auto;
+}
+input[type=color]{
+  width: 50%;
+  height: 90px;
+  margin: auto
+}
+label{
+  padding-bottom: 5px;
+}
+.spacer{
+  height:10px;
+}
+
+.effect-name{
+  font-family: antique;
+  font-size: 22px;
+  font-weight: bold;
+  text-align: center;
+}
+</style>
+
+<div class="header_buttons">
+  <div class="button_container" style="text-align: end"><input type="button" value="Turn On" class="button" onclick="fetch('/on')"></div>
+  <div class="button_container" style="text-align: end"><input type="button" value="Turn Off" class="button" onclick="fetch('/off')"></div>
+  <div class="button_container" style="text-align: end"><input type="button" value="Save" class="button" onclick="save()"></div>
+  <div class="button_container" style="text-align: end">
+    <input type="button" value="Reset!" class="button" onclick="reset()">
+  </div>
+</div>
+<div class="head_spacer"></div>
+
+<div id="container">
+  <div  class="basic-settings">
+    <label>Base color</label>
+    <input type="color" id="basecol">
+    <label>Brightness</label>
+    <div class="slider-line">min <input type="range"  min="0" max="255" id="basebright" onchange="fetch('/setbright?piff=' + document.getElementById('basebright').value )"> max</div>
+  </div>
+</div>
+
+<template id="animtemplate">
+  <div class="anim-node container-fluid">
+    <label>Effects</label>
+    <div class="effectlist"></div>
+  </div>
+</template>
+
+<template id="effecttemplate">
+  <div  class="effect-node">
+    <label>Effect Color</label>
+    <input type="color">
+    <label>Color Hue Drift</label>
+    <div class="spacer"></div>
+    <div class="slider-line">none <input type="range"  min="0" max="128" > max</div>
+    <label>Color Change Chance</label>
+    <div class="spacer"></div>
+    <div class="slider-line-chance">none <input type="range"  min="0" max="255" > max</div>
+    <label>Color Mix Weight</label>
+    <div class="spacer"></div>
+    <div class="slider-line-weight">none <input type="range"  min="0" max="255" > max</div>
+    <div class="ratiolist"></div>
+  </div>
+</template>
+
+<template id="ratiotemplate">
+  <div class="ratio-node">
+    <label>Effect type</label>
+    <select disabled class="effect-name">
+      <option value="1">trickle to</option>
+      <option value="2">rotate to</option>
+      <option value="3">fade to</option>
+      <option value="1000">hold</option>
+      <option value="1001">hold/wave</option>
+    </select>
+    <label>Ratio to Occour</label>
+    <div class="slider-line">none <input type="range"  min="0" max="100" > high</div>
+    <div class="times-line">
+      <div class="times">
+        <label>Min time</label>
+        <input type="number" min="3000" max="10000">
+      </div>
+      <div class="times"></div>
+        <label>Max time</label>
+        <input type="number" min="5000" max="30000">
+      </div>
+    </div>
+
+
+  </div>
+</template>
+
+<script>
+
+let mainCont = document.getElementById("container")
+let savedCont = mainCont.innerHTML;
+let animTemplate = document.getElementById("animtemplate")
+let effectTemplate = document.getElementById("effecttemplate")
+let ratioTemplate = document.getElementById("ratiotemplate")
+
+var settings;
+load();
+
+function reset(){
+  if(confirm('Are you sure you want to reset to defaults?')){fetch('/reset').then(()=>{loadDefault()})};
+}
+
+function loadDefault(){
+  fetch('/default.json')
+  .then(response => response.json())
+  .then(data => {settings=data; save();  buildUi(settings);})
+  
+}
+
+function load(){
+  fetch('/settings.json')
+  .then(response => response.json())
+  .then(data => {settings=data; buildUi(settings)});
+}
+
+function save(){
+  fetch('/savesettings', { method: 'POST', headers: { 'Content-Type': 'application/json'  }, body: JSON.stringify(settings)})
+}
+
+function buildUi(data){
+
+  mainCont.innerHTML = savedCont;
+  let brightnessInput = document.getElementById("basebright")
+  bindInput(brightnessInput,data,"brightness")
+  
+  //data.aimations.forEach((anim)=>{
+    let baseColorInput = document.getElementById("basecol")
+    bindColorInput(baseColorInput,data.baseColor,"h","s","v")
+
+    let newAnimNode = animTemplate.content.cloneNode(true)
+
+    data.effects.forEach((effect)=>{
+      let newEffectNode = effectTemplate.content.cloneNode(true)
+      bindColorInput(newEffectNode.querySelector("input"),effect,"h","s","v")
+      bindInput(newEffectNode.querySelector(".slider-line input"),effect,"h_d")
+      bindInput(newEffectNode.querySelector(".slider-line-chance input"),effect,"c_c")
+      bindInput(newEffectNode.querySelector(".slider-line-weight input"),effect,"w")
+
+      
+      
+      effect.ratios.forEach((ratio)=>{
+        let newRatioNode = ratioTemplate.content.cloneNode(true)
+        bindInput(newRatioNode.querySelector(".slider-line input"),ratio,"r")
+        bindInput(newRatioNode.querySelector("select"),ratio,"typeId")
+        bindInput(newRatioNode.querySelectorAll(".times-line input")[0],ratio,"minT")
+        bindInput(newRatioNode.querySelectorAll(".times-line input")[1],ratio,"maxT")
+
+        newEffectNode.querySelector(".ratiolist").appendChild(newRatioNode)
+      })
+
+      newAnimNode.querySelector(".effectlist").appendChild(newEffectNode)
+    })
+    mainCont.appendChild(newAnimNode)
+
+  //})
+}
+
+function bindInput(nodeRef,propertyParent,propertyName){
+  nodeRef.value = propertyParent[propertyName]
+  nodeRef.addEventListener("change",(e)=>{
+    propertyParent[propertyName] = e.target.value;
+    console.log(e.target.value)
+  })
+}
+
+
+
+function bindColorInput(nodeRef,propertyParent,propertyNameH,propertyNameS,propertyNameV){
+  setColor(nodeRef,propertyParent[propertyNameH],propertyParent[propertyNameS],propertyParent[propertyNameV])
+  nodeRef.addEventListener("change",(e)=>{
+    let hsv = hexToHsv(e.target.value)
+    propertyParent[propertyNameH] = hsv.h;
+    propertyParent[propertyNameS] = hsv.s;
+    propertyParent[propertyNameV] = hsv.v;
+    if(nodeRef.id == 'basecol'){
+      let cData = '{"h":' + hsv.h + ',"s":' + hsv.s + ',"v":' + hsv.v + '}';
+      fetch('/setcolor', { method: 'POST', body: cData});
+    }
+  })
+}
+
+
+
+// color fuckery zone
+
+function setColor(nodeRef, h,s,v){
+  nodeRef.value=hsvToHex(h,s,v)
+}
+
+function hexToHsv(hex){ // all hsv values in 255
+  let rgb = hexToRgb(hex)
+  let hsv = rgb2hsv(rgb.r, rgb.g, rgb.b)
+  return {  h:Math.round(hsv[0]*255/360),  s:Math.round(hsv[1]*255),  v:hsv[2]  };
+}
+
+function hsvToHex(h,s,v){ // all hsv values in 255
+  let rgbArr = hsv2rgb(h/255*360,s/255,v/255);
+  let hex = convertRGBtoHex(...rgbArr.map(a=>Math.round(a*255)))
+  return hex;
+}
+
+function rgb2hsv(r,g,b) {
+  let v=Math.max(r,g,b), c=v-Math.min(r,g,b);
+  let h= c && ((v==r) ? (g-b)/c : ((v==g) ? 2+(b-r)/c : 4+(r-g)/c)); 
+  return [60*(h<0?h+6:h), v&&c/v, v];
+}
+function hsv2rgb(h,s,v) 
+{                              
+  let f= (n,k=(n+h/60)%6) => v - v*s*Math.max( Math.min(k,4-k,1), 0);     
+  return [f(5),f(3),f(1)];       
+}  
+function colorToHex(color) {
+  var hexadecimal = color.toString(16);
+  return hexadecimal.length == 1 ? "0" + hexadecimal : hexadecimal;
+}
+function convertRGBtoHex(red, green, blue) {
+  return "#" + colorToHex(red) + colorToHex(green) + colorToHex(blue);
+}
+
+function hexToRgb(hex) {
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? {
+    r: parseInt(result[1], 16),
+    g: parseInt(result[2], 16),
+    b: parseInt(result[3], 16)
+  } : null;
+}
+
+
+</script>

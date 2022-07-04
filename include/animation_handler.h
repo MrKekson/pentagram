@@ -9,27 +9,30 @@
 #include "debug.h"
 #include "base.h"
 #include "animation.h"
-#include "animations/rotate300.h"
+#include "animation_elements.h"
 
 class AnimationHandler
 {
 private:
     u_int _loopCount = 0;
     u_int _setupCount = 0;
-    Renderer _rndr;
+    Renderer *_rndr;
 
 public:
-    Animation *animationCurrent;
+    // Animation *animationCurrent;
     AnimationHandler();
     ~AnimationHandler();
-    void Setup();
-    void Loop(int64_t now);
+    void Setup(Renderer *rndr, ParsedAnimationData *eData);
+    void Loop();
+    void Reset();
 
-    void ProcessAnimation();
+    Animation *CreateAnimation(SData prevData, ColorDelta delta, std::vector<ParsedEffectPartData> ratios, int64_t now);
 
-    CHSV baseColor, effectColor;
+    CHSV baseColor;
     std::vector<SData> symbolData;
-    std::vector<std::pair<SData, SData>> CreateRandomSymbolPairs();
+
+    std::vector<BaseEffect *> baseEffects;
+    std::vector<Animation *> animations;
 };
 
 AnimationHandler::AnimationHandler()
@@ -38,104 +41,185 @@ AnimationHandler::AnimationHandler()
 
 AnimationHandler::~AnimationHandler()
 {
-    delete animationCurrent;
+    for (Animation *a : animations)
+    {
+        delete a;
+    }
 }
 
-void AnimationHandler::Loop(int64_t now)
+void AnimationHandler::Reset()
 {
-    // Serial.print(":loooooooooooooooooooooooooooooooooop");
-    //_loopCount++;
-    animationCurrent->Update(now);
-    if (!animationCurrent->isFinished)
-    {
-        _rndr.Render(animationCurrent->effects);
-    }
-
-    if (animationCurrent->isFinished)
-    {
-        delete animationCurrent;
-        ProcessAnimation();
-    }
-
-    // Serial.print("----------------------------------");
-
-    // Serial.print("********************\n");
+    baseEffects.clear();
+    animations.clear();
 }
 
-std::vector<std::pair<SData, SData>> AnimationHandler::CreateRandomSymbolPairs() // make configurable
+void AnimationHandler::Loop()
 {
-    std::vector<std::pair<SData, SData>> retVect;
-    for (SData &symbol : symbolData)
+    int64_t now = esp_timer_get_time();
+
+    std::vector<BaseEffect *> runningEffects;
+    runningEffects.insert(runningEffects.end(), baseEffects.begin(), baseEffects.end());
+
+    for (int i = animations.size() - 1; i >= 0; i--)
     {
-        SData symbol2 = symbol;
+        Animation *a = animations[i];
 
-        symbol2.symbol = rand() % 12;
+        a->Update(now);
+        if (a->isFinished)
+        {
+            SData temp = a->data;
+            ColorDelta tempBaseCol = a->baseColor;
+            std::vector<ParsedEffectPartData> ratios = a->ratiosData;
+            delete a;
+            animations[i] = CreateAnimation(temp, tempBaseCol, ratios, now);
+        }
 
-        retVect.push_back(std::make_pair(symbol, symbol2));
-        symbol = symbol2;
+        runningEffects.insert(runningEffects.end(), animations[i]->effects.begin(), animations[i]->effects.end());
     }
-    return retVect;
+
+    _rndr->Render(runningEffects, now);
 }
 
-void AnimationHandler::ProcessAnimation()
+SData CreateNextSData(SData prev, ColorDelta colorDelta) // make configurable and range based eg colour +- range etc
 {
-    int ePlay = 1; // rand() % 2; // shoulb be weighed chnage chooser, then weighted effect chances
+    SData symbolNew = prev;
 
-    int animEndTime = (3 + rand() % 7) * SEC_TO_MICRO; // should be diff for chnage and hold
+    int rnd = esp_random() % 100;
 
-    animationCurrent = new Animation();
-    std::vector<BaseEffect *> effects;
-
-    switch (ePlay)
+    if (colorDelta.chance > 0)
     {
-    case 0:
-        effects = LightAndHold(symbolData, 0, animEndTime);
+        int rndChn = esp_random() % 100;
 
-        break;
+        if (rndChn < colorDelta.chance)
+        {
+
+            double hStep = ((colorDelta.deltaH * 2) / 99 * rnd) - colorDelta.deltaH;
+            symbolNew.c.H = Clamp(colorDelta.H + hStep, 255);
+
+            Serial.print(hStep);
+            Serial.print(" yolo ");
+
+            // double sStep = ((colorDelta.deltaS * 2) / 99 * rnd) - colorDelta.deltaS;
+            // double vStep = ((colorDelta.deltaV * 2) / 99 * rnd) - colorDelta.deltaV;
+
+            // symbolNew.c.S = Clamp(colorDelta.S + sStep, 255);
+            // symbolNew.c.V = Clamp(colorDelta.V + vStep, 255);
+
+            Serial.print(symbolNew.c.H);
+            Serial.print(" swag \n");
+        }
+    }
+
+    symbolNew.symbol = esp_random() % 12;
+
+    return symbolNew;
+}
+
+SData CreateEffcetsById(std::vector<BaseEffect *> &effects, int effectId, SData prevData, SData nextData, int64_t animEndTime)
+{
+    SData retData = nextData;
+    switch (effectId)
+    {
     case 1:
-        effects = Trickle(CreateRandomSymbolPairs(), 0, animEndTime);
+        effects = Trickle(prevData, nextData, 0, animEndTime);
         break;
-    default:
+    case 2:
+        effects = RotateTo(prevData, nextData, 0, animEndTime);
+        break;
+    case 3:
+        effects = FadeTo(prevData, nextData, 0, animEndTime);
+        break;
+    case 1000:
+        effects = LightAndHold(prevData, prevData, 0, animEndTime);
+        retData = prevData;
+        break;
+    case 1001:
+        effects = LightAndHold(prevData, nextData, 0, animEndTime);
+        retData = prevData;
         break;
     }
-
-    // Add background effect once here
-    BaseEffect *backgroundEffect = new BaseEffect(baseColor, nullptr, 0, nullptr, 360, nullptr, 48, nullptr, 0, animEndTime);
-    effects.push_back(backgroundEffect);
-
-    animationCurrent->Setup(effects);
-
-    // Serial.print(_loopCount);
-    // Serial.print(":loop Creating Anim --- ");
-    // animationCurrent = new Animation();
-
-    // Serial.print("Creating Effect ----");
-
-    // _setupCount++;
-    // Serial.print("Setup Count ----");
-    // Serial.print(_setupCount);
-    // Serial.print("\n");
-
-    // std::vector<BaseEffect *> effects = Trickle(vect symol);
-    // Serial.print(effects.size());
-    // Serial.print("Adding Effect ");
-    // size_t bytes = sizeof(BaseEffect) * effects.size();
-    // Serial.print(" B ESize: ");
-    // Serial.print(bytes);
-
-    // animationCurrent->Setup(effects);
-    // Serial.print("   DONE \n");
+    return retData;
 }
 
-void AnimationHandler::Setup()
+Animation *AnimationHandler::CreateAnimation(SData prevData, ColorDelta colorDelta, std::vector<ParsedEffectPartData> ratios, int64_t now)
 {
-    baseColor = CHSV(160, 64, 80);
-    effectColor = CHSV(180, 192, 192);
+    std::vector<BaseEffect *> effects;
+    SData newData;
 
-    symbolData.push_back(SData(effectColor, 0, 350));
-    symbolData.push_back(SData(effectColor, 11, 300));
-    // symbolData.push_back(SData(CHSV(0, 128, 128), 9, 192));
+    static int effectNum = ratios.size();
 
-    _rndr.Setup();
-    ProcessAnimation();
+    int effectRatioEndpoints[effectNum + 1];
+
+    Serial.print(ratios.size());
+    Serial.print("- ratiosize \n");
+
+    int ratioCount = 0;
+
+    for (int i = 0; i < effectNum; i++)
+    {
+        if (colorDelta.weight > 0)
+        {
+            Serial.print(ratioCount);
+            Serial.print(" :rcount ");
+            Serial.print(ratios[i].ratio);
+            Serial.print(" :ratio  \n");
+        }
+        effectRatioEndpoints[i] = ratioCount + ratios[i].ratio;
+        ratioCount += ratios[i].ratio;
+    }
+
+    int chn = esp_random() % ratioCount;
+
+    if (colorDelta.weight > 0)
+    {
+        Serial.print(chn);
+        Serial.print(" :chn  \n");
+    }
+    bool finished = false;
+    int i = 0;
+
+    while (i < effectNum && !finished)
+    {
+        if (chn < effectRatioEndpoints[i])
+        {
+            if (colorDelta.weight > 0)
+            {
+                Serial.print(effectRatioEndpoints[i]);
+                Serial.print(" :end  ");
+                Serial.print(chn);
+                Serial.print(" :chn  \n");
+            }
+            newData = CreateNextSData(prevData, colorDelta);
+            int64_t endTime = (rand() % ratios[i].maxTime + ratios[i].minTime) * 1000;
+
+            newData = CreateEffcetsById(effects, ratios[i].typeId, prevData, newData, endTime);
+            finished = true;
+        }
+        i++;
+    }
+
+    Animation *animationCurrent = new Animation(newData, colorDelta);
+    animationCurrent->ratiosData = ratios;
+
+    animationCurrent->Setup(effects, now);
+    return animationCurrent;
+}
+
+void AnimationHandler::Setup(Renderer *rndr, ParsedAnimationData *aData)
+{
+    int64_t now = esp_timer_get_time();
+    _rndr = rndr;
+
+    BaseEffect *backgroundEffect = new BaseEffect(aData->baseColor, nullptr, 0, nullptr, 360, nullptr, 50, nullptr, 0, 0);
+    backgroundEffect->isFullRenderTime = true;
+    baseEffects.push_back(backgroundEffect);
+
+    for (ParsedEffectData e : aData->effectDatas)
+    {
+        if (e.effectDelta.weight > 0)
+        {
+            int rnd = esp_random() % 12;
+            animations.push_back(CreateAnimation(SData(e.effectColor, rnd, e.effectDelta.weight), e.effectDelta, e.partDatas, now));
+        }
+    }
 }

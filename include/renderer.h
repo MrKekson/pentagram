@@ -49,6 +49,7 @@ struct WCData
 class Renderer
 {
 private:
+    bool active = true;
     int brightness = DEFAULT_BRIGHTNESS;
 
     CHSV _data[NUM_DEG];
@@ -57,9 +58,25 @@ private:
 public:
     Renderer();
     ~Renderer();
-    void Render(const std::vector<BaseEffect *> &effects);
+    void Render(const std::vector<BaseEffect *> &effects, int64_t now);
     void Setup();
+    void SetBrightness(int b);
+    void SetColor(CHSV c);
+    void Deactivate();
+    void Activate();
 };
+
+void Renderer::Activate()
+{
+    active = true;
+}
+
+void Renderer::Deactivate()
+{
+    fill_solid(_leds, NUM_LEDS, CRGB(0, 0, 0));
+    FastLED.show();
+    active = false;
+}
 
 Renderer::Renderer()
 {
@@ -69,118 +86,157 @@ Renderer::~Renderer()
 {
 }
 
+void Renderer::SetBrightness(int b)
+{
+    if (b >= 0 && b <= 255)
+    {
+        brightness = b;
+    }
+}
+
+void Renderer::SetColor(CHSV c)
+{
+    fill_solid(_leds, NUM_LEDS, CRGB(c));
+    FastLED.show();
+}
+
 void Renderer::Setup()
 {
     FastLED.addLeds<NEOPIXEL, OUTPUT_PIN>(_leds, NUM_LEDS);
     FastLED.setBrightness(brightness);
     FastLED.clear();
 
-    fill_solid(_leds, NUM_LEDS, CRGB(96, 0, 0));
-    FastLED.show();
-    delay(200);
+    for (size_t i = 0; i <= 255; i++)
+    {
+        int col = Clamp(i, 255);
+        fill_solid(_leds, NUM_LEDS, CRGB(CHSV(col, 128, 128)));
+        FastLED.show();
+        delay(5);
+    }
 }
 
-void Renderer::Render(const std::vector<BaseEffect *> &effects)
+void Renderer::Render(const std::vector<BaseEffect *> &effects, int64_t now)
 {
-    int led_width = 3;
-
-    WCData _weightedData[NUM_DEG];
-
-    for (BaseEffect *e : effects)
+    if (active)
     {
-        if (e->isRunning)
+        /* code */
+
+        int led_width = 3;
+
+        WCData _weightedData[NUM_DEG];
+        // Serial.print("e ");
+        // Serial.print(effects.size());
+        // Serial.print(" ");
+        for (BaseEffect *e : effects)
         {
-            double halfWidth = e->_width / 2.0;
-            double minDeg = e->_deg - halfWidth;
-            double maxDeg = e->_deg + halfWidth;
+            if (e->isRunning(now) || e->isFullRenderTime)
+            {
+                // Serial.print(u_int(e));
+                // Serial.print(" d: ");
+                // Serial.print((double)e->_deg);
+                // Serial.print(" w: ");
+                // Serial.print((double)e->_width);
+
+                // Serial.print(" FÁK");
+                double halfWidth = e->_width / 2.0;
+                double minDeg = e->_deg - halfWidth;
+                double maxDeg = e->_deg + halfWidth;
+
+                // Serial.print("FÁK ");
+                //  Serial.print(halfWidth);
+                //  Serial.print(" -- ");
+                //  Serial.print(e->_deg);
+                //  Serial.print(" -- ");
+                //  Serial.print(minDeg);
+                //  Serial.print(" -- ");
+                //  Serial.print(maxDeg);
+                //  Serial.print(" \n ");
+
+                for (int i = minDeg; i <= maxDeg; i++)
+                {
+                    int j = Clamp(i);
+
+                    _weightedData[j].h += e->_c.H * e->_rWeight;
+                    _weightedData[j].s += e->_c.S * e->_rWeight;
+                    _weightedData[j].v += e->_c.V * e->_rWeight;
+                    _weightedData[j].currentWeight += e->_rWeight;
+
+                    // Serial.print(' ');
+                    // Serial.print(_weightedData[j].currentWeight);
+                }
+            }
 
             // Serial.print('\n');
-            // Serial.print(halfWidth);
-            // Serial.print(" -- ");
-            // Serial.print(e->_deg);
-            // Serial.print(" -- ");
-            // Serial.print(minDeg);
-            // Serial.print(" -- ");
-            // Serial.print(maxDeg);
-            // Serial.print(" \n ");
+        }
+        // Serial.print("n");
 
-            for (int i = minDeg; i <= maxDeg; i++)
+        // Serial.print("\n rendering 360 \n");
+        for (int i = 0; i < NUM_DEG; ++i)
+        {
+            // Serial.print("i:");
+            // Serial.print(i);
+            // Serial.print(" h:");
+            // Serial.print(_weightedData[i].h);
+            // Serial.print(" w: ");
+            // Serial.print(_weightedData[i].currentWeight);
+            // Serial.print(" \n: ");
+
+            if (_weightedData[i].currentWeight > 0)
             {
-                int j = Clamp(i);
+                _data[i].h = _weightedData[i].h / _weightedData[i].currentWeight;
+                _data[i].s = _weightedData[i].s / _weightedData[i].currentWeight;
+                _data[i].v = _weightedData[i].v / _weightedData[i].currentWeight;
 
-                _weightedData[j].h += e->_c.h * e->_rWeight;
-                _weightedData[j].s += e->_c.s * e->_rWeight;
-                _weightedData[j].v += e->_c.v * e->_rWeight;
-                _weightedData[j].currentWeight += e->_rWeight;
-
-                // Serial.print(' ');
-                // Serial.print(_weightedData[j].currentWeight);
+                // Serial.print("_");
+                // Serial.print(_data[i].s);
+                // Serial.print("_");
+                // Serial.print(_data[i].v);
+                // Serial.print(_data[i].h);
+                // Serial.print(" ");
             }
         }
-
-        // Serial.print('\n');
-    }
-
-    // Serial.print("\n rendering 360 \n");
-    for (int i = 0; i < NUM_DEG; ++i)
-    {
-        // Serial.print("i:");
-        // Serial.print(i);
-        // Serial.print(" h:");
-        // Serial.print(_weightedData[i].h);
-        // Serial.print(" w: ");
-        // Serial.print(_weightedData[i].currentWeight);
         // Serial.print(" \n: ");
+        // Serial.print("d");
+        // Serial.print("rendering leds \n");
 
-        if (_weightedData[i].currentWeight > 0)
+        for (int i = 0; i < NUM_LEDS; i++)
         {
-            _data[i].h = _weightedData[i].h / _weightedData[i].currentWeight;
-            _data[i].s = _weightedData[i].s / _weightedData[i].currentWeight;
-            _data[i].v = _weightedData[i].v / _weightedData[i].currentWeight;
-        }
-        else
-        {
-            _data[i] = CHSV(0, 0, 0);
-        }
-    }
-    // Serial.print(" \n: ");
+            int di = i * LED_RATIO - POS_CORRECTION;
 
-    // Serial.print("rendering leds \n");
+            int h = 0, s = 0, v = 0, count = 0;
+            int lnum = 0;
 
-    for (int i = 0; i < NUM_LEDS; i++)
-    {
-        int di = i * LED_RATIO - POS_CORRECTION;
-
-        int h = 0, s = 0, v = 0, count = 0;
-        int lnum = 0;
-
-        for (int dnum = di - led_width; dnum < di + led_width; dnum++)
-        {
-            count++;
-            lnum = Clamp(dnum);
-
-            h += _data[lnum].h;
-            s += _data[lnum].s;
-            v += _data[lnum].v;
-
-            if (dnum == di)
+            for (int dnum = di - led_width; dnum < di + led_width; dnum++)
             {
-                count += 2;
+                count++;
                 lnum = Clamp(dnum);
 
-                h += _data[lnum].h * 2;
-                s += _data[lnum].s * 2;
-                v += _data[lnum].v * 2;
+                h += _data[lnum].h;
+                s += _data[lnum].s;
+                v += _data[lnum].v;
+
+                if (dnum == di)
+                {
+                    count += 2;
+                    lnum = Clamp(dnum);
+
+                    h += _data[lnum].h * 2;
+                    s += _data[lnum].s * 2;
+                    v += _data[lnum].v * 2;
+                }
+
+                // weighted in middle, but maybe not ok
             }
+            h = h / count;
+            s = s / count;
+            v = v / count;
 
-            // weighted in middle, but maybe not ok
+            _leds[NUM_LEDS - 1 - i] = CHSV(h, s, v);
         }
-        h = h / count;
-        s = s / count;
-        v = v / count;
+        // Serial.print("e");
 
-        _leds[NUM_LEDS - 1 - i] = CHSV(h, s, v);
+        FastLED.setBrightness(brightness);
+        FastLED.show();
     }
-
-    FastLED.show();
+    // Serial.print("r");
 }

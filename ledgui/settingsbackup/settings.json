@@ -1,0 +1,152 @@
+{
+    "brightness": 90,
+    "baseColor": {
+        "h": 140,
+        "s": 160,
+        "v": 96
+    },
+    "aimations": [
+        {
+            "name": "my fantastic name 01",
+            "effects": [
+                {
+                    "h": 90,
+                    "s": 255,
+                    "v": 255,
+                    "h_d": 80,
+                    "s_d": 20,
+                    "v_d": 10,
+                    "ratios": [
+                        {
+                            "typeID": 1,
+                            "ratio": 5,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        },
+                        {
+                            "typeID": 3,
+                            "ratio": 10,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        }
+                    ]
+                },
+                {
+                    "h": 160,
+                    "s": 160,
+                    "v": 160,
+                    "h_d": 20,
+                    "s_d": 20,
+                    "v_d": 10,
+                    "ratios": [
+                        {
+                            "typeID": 2,
+                            "ratio": 5,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        },
+                        {
+                            "typeID": 5,
+                            "ratio": 10,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        }
+                    ]
+                },
+                {
+                    "h": 160,
+                    "s": 160,
+                    "v": 160,
+                    "h_d": 60,
+                    "s_d": 20,
+                    "v_d": 10,
+                    "ratios": [
+                        {
+                            "typeID": 4,
+                            "ratio": 5,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        },
+                        {
+                            "typeID": 3,
+                            "ratio": 10,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        }
+                    ]
+                }
+            ]
+        },
+		{
+            "name": "my 2222222222 anim",
+            "effects": [
+                {
+                    "h": 160,
+                    "s": 160,
+                    "v": 160,
+                    "h_d": 60,
+                    "s_d": 20,
+                    "v_d": 10,
+                    "ratios": [
+                        {
+                            "typeID": 1,
+                            "ratio": 5,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        },
+                        {
+                            "typeID": 3,
+                            "ratio": 10,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        }
+                    ]
+                },
+                {
+                    "h": 160,
+                    "s": 160,
+                    "v": 160,
+                    "h_d": 60,
+                    "s_d": 20,
+                    "v_d": 10,
+                    "ratios": [
+                        {
+                            "typeID": 2,
+                            "ratio": 5,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        },
+                        {
+                            "typeID": 5,
+                            "ratio": 10,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        }
+                    ]
+                },
+                {
+                    "h": 160,
+                    "s": 160,
+                    "v": 160,
+                    "h_d": 60,
+                    "s_d": 20,
+                    "v_d": 10,
+                    "ratios": [
+                        {
+                            "typeID": 4,
+                            "ratio": 5,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        },
+                        {
+                            "typeID": 3,
+                            "ratio": 10,
+                            "minTime": 3000,
+                            "maxTime": 10000
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}
